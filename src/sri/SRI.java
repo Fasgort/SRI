@@ -12,7 +12,8 @@ public class SRI {
      * @param args the command line arguments
      */
     public static void main(String[] args) {
-        HTMLfilter.filter("coleccionEN/en002.html");
+        String textFiltered = HTMLfilter.filterEN("coleccionEN/en002.html");
+        HTMLfilter.normalize(textFiltered);
     }
 
 }
