@@ -18,17 +18,18 @@ public class HTMLfilter {
     static public String filterEN(String route) {
 
         File file = new File(route);
-        Document html = null;
+        Document html;
+        Elements content;
 
         try {
             html = Jsoup.parse(file, null);
+            content = html.select(".post-body p").not(".read-more");
+            return html.title() + "\n" + content.text();
         } catch (Exception e) {
             System.out.println("File can't load.");
         }
 
-        Elements content = html.select(".post-body p").not(".read-more");
-
-        return html.title() + content.text();
+        return null;
     }
 
     static public ArrayList<String> normalize(String text) {
