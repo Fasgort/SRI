@@ -1,19 +1,20 @@
 package sri;
 
 import java.io.*;
+import java.util.*;
+import java.util.regex.Pattern;
+import java.util.regex.Matcher;
 import org.jsoup.Jsoup;
 import org.jsoup.nodes.Document;
 import org.jsoup.select.Elements;
-import java.util.ArrayList;
-import java.util.StringTokenizer;
-import java.util.regex.Pattern;
-import java.util.regex.Matcher;
 
 /**
  *
  * @author Fasgort
  */
 public class HTMLfilter {
+
+    static private Set<String> stopWordSet = null;
 
     static public String filterEN(String route) {
 
@@ -36,7 +37,7 @@ public class HTMLfilter {
 
         ArrayList<String> tokenList = new ArrayList();
         StringTokenizer st = new StringTokenizer(text);
-        Pattern pt = Pattern.compile("[a-zA-Z0-9'_-]*");
+        Pattern pt = Pattern.compile("[\\w]+(['_-]?[\\w]+)*");
         Matcher m;
         String word;
         String newWord;
@@ -51,11 +52,42 @@ public class HTMLfilter {
             }
 
             if (!newWord.isEmpty()) {
-                tokenList.add(newWord);
+                tokenList.add(newWord.toLowerCase());
             }
         }
 
         return tokenList;
+    }
+
+    static public ArrayList<String> stopper(ArrayList<String> text) {
+
+        File file = new File("EnglishST.txt");
+        try (FileReader fr = new FileReader(file);
+                BufferedReader br = new BufferedReader(fr);) {
+
+            if (stopWordSet == null) {
+                stopWordSet = new HashSet();
+                String word;
+
+                while ((word = br.readLine()) != null) {
+                    stopWordSet.add(word);
+                }
+                br.close();
+            }
+
+            ArrayList<String> tokenList = new ArrayList();
+
+            text.stream().filter((j) -> (!stopWordSet.contains(j))).forEach((j) -> {
+                tokenList.add(j);
+            });
+
+            return tokenList;
+
+        } catch (Exception e) {
+            System.out.println("File can't load.");
+        }
+
+        return null;
     }
 
 }
