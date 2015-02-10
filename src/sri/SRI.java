@@ -40,6 +40,7 @@ public class SRI {
             file += ".html";
 
             String textFiltered = HTMLfilter.filterEN(dir + file);
+            if(textFiltered == null) continue;
 
             tokenList = HTMLfilter.normalize(textFiltered);
             File dirNorm = new File("coleccionEnNormalized/");
@@ -57,6 +58,7 @@ public class SRI {
             
 
             tokenList = HTMLfilter.stopper(tokenList);
+            if(tokenList == null) continue;
             File dirStop = new File("coleccionEnStopped/");
             dirStop.mkdir();
             try (FileWriter wr = new FileWriter("coleccionEnStopped/" + file.replace(".html", ".txt"))) {

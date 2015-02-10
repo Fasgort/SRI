@@ -24,8 +24,15 @@ public class HTMLfilter {
 
         try {
             html = Jsoup.parse(file, null);
-            content = html.select(".post-body p").not(".read-more");
-            return html.title() + "\n" + content.text();
+            content = html.select(".post-body > p").not(".read-more");
+            if (!html.select("meta[property=og:url]").attr("content").contains("http://www.engadget.com/")) {
+                return null;
+            }
+            if (!content.isEmpty()) {
+                return html.title() + "\n" + content.text();
+            } else {
+                return null;
+            }
         } catch (Exception e) {
             System.out.println("File can't load.");
         }
