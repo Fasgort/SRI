@@ -12,18 +12,16 @@ import org.jsoup.select.Elements;
  *
  * @author Fasgort
  */
-public class HTMLfilter {
+public interface HTMLfilter {
 
-    static private Set<String> stopWordSet = null;
+    static public String filterEN(String dir, String file) {
 
-    static public String filterEN(String route) {
-
-        File file = new File(route);
+        File f = new File(dir + file);
         Document html;
         Elements content;
 
         try {
-            html = Jsoup.parse(file, null);
+            html = Jsoup.parse(f, null);
             content = html.select(".post-body > p").not(".read-more");
             if (!html.select("meta[property=og:url]").attr("content").contains("http://www.engadget.com/")) {
                 return null;
@@ -34,7 +32,7 @@ public class HTMLfilter {
                 return null;
             }
         } catch (Exception e) {
-            System.out.println("File can't load.");
+            System.out.println("Module filterEN: File " + file + " couldn't load.");
         }
 
         return null;
@@ -66,14 +64,13 @@ public class HTMLfilter {
         return tokenList;
     }
 
-    static public ArrayList<String> stopper(ArrayList<String> text) {
+    static public ArrayList<String> stopper(ArrayList<String> text, Set<String> stopWordSet, String stopWordDir, String stopWordFile) {
 
-        File file = new File("EnglishST.txt");
-        try (FileReader fr = new FileReader(file);
+        File f = new File(stopWordDir + stopWordFile);
+        try (FileReader fr = new FileReader(f);
                 BufferedReader br = new BufferedReader(fr);) {
 
-            if (stopWordSet == null) {
-                stopWordSet = new HashSet();
+            if (stopWordSet.isEmpty()) {
                 String word;
 
                 while ((word = br.readLine()) != null) {
@@ -91,7 +88,7 @@ public class HTMLfilter {
             return tokenList;
 
         } catch (Exception e) {
-            System.out.println("File can't load.");
+            System.out.println("Module stopper: File " + stopWordFile + " couldn't load.");
         }
 
         return null;
