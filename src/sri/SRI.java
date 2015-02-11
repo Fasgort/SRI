@@ -23,6 +23,7 @@ public class SRI {
 
         Set<String> stopWordSet = new HashSet(800);
 
+        String debug;
         String dirResources;
         String stopWordFilename;
         String stringDirColEn;
@@ -34,6 +35,7 @@ public class SRI {
         try (FileReader fr = new FileReader(confData);
                 BufferedReader br = new BufferedReader(fr);) {
 
+            debug = br.readLine();
             dirResources = br.readLine();
             stopWordFilename = br.readLine();
             stringDirColEn = br.readLine();
@@ -60,6 +62,7 @@ public class SRI {
             String file = arrayHTMLfile1.getName();
             String textFiltered = HTMLfilter.filterEN(stringDirColEn, file);
             if (textFiltered == null) {
+                if(debug.contentEquals("enabled")) System.out.println("File " + file + " was ignored and won't be included in the SE.");
                 continue;
             }
 
