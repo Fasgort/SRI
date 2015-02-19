@@ -1,6 +1,7 @@
-enabled
+not-enabled
 ./resources/
 englishST.txt
 ./coleccionEn/
 ./coleccionEnNormalized/
 ./coleccionEnStopped/
+./coleccionEnStemmed/

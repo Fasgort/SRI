@@ -1,0 +1,9 @@
+/dist/
+/build/
+/coleccionEn/
+/coleccionEnNormalized/
+/coleccionEnStemmed/
+/coleccionEnStopped/
+/nbproject/
+/manifest.mf
+*.xml

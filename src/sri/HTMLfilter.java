@@ -7,6 +7,8 @@ import java.util.regex.Matcher;
 import org.jsoup.Jsoup;
 import org.jsoup.nodes.Document;
 import org.jsoup.select.Elements;
+import org.tartarus.snowball.*;
+import org.tartarus.snowball.ext.englishStemmer;
 
 /**
  *
@@ -92,6 +94,34 @@ public interface HTMLfilter {
         }
 
         return null;
+    }
+
+    static public ArrayList<String> stemmer(ArrayList<String> wordArray) {
+
+        ArrayList<String> stemmedWords = new ArrayList();
+
+        try {
+            Class stemClass = Class.forName("org.tartarus.snowball.ext."
+                    + "englishStemmer");
+            SnowballStemmer stemmer = (SnowballStemmer) stemClass.newInstance();
+
+            wordArray.stream().map((j) -> {
+                stemmer.setCurrent(j);
+                return j;
+            }).forEach((j) -> {
+                if (stemmer.stem()) {
+                    stemmedWords.add(stemmer.getCurrent());
+                } else {
+                    stemmedWords.add(j);
+                }
+            });
+
+        } catch (Exception e) {
+            System.out.println("Module stemmer: englishStemmer couldn't load.");
+            return null;
+        }
+
+        return stemmedWords;
     }
 
 }
