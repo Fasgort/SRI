@@ -23,8 +23,8 @@ public class SRI {
         int maxNumWords2 = Integer.MIN_VALUE;
 
         Set<String> stopWordSet = new HashSet(800);
-        Map<String, Integer> cleanedWords = new HashMap(25000);
-        Map<String, Integer> stemmedWords = new HashMap(20000);
+        Map<String, FrequentWord> cleanedWords = new HashMap(25000);
+        Map<String, FrequentWord> stemmedWords = new HashMap(20000);
 
         String debug;
         String dirResources;
@@ -34,6 +34,7 @@ public class SRI {
         String stringDirColEnStop;
         String stringDirColEnStem;
 
+        // Lectura de configuración
         File confData = new File("./conf.data");
 
         try (FileReader fr = new FileReader(confData);
@@ -53,13 +54,16 @@ public class SRI {
             System.out.println("Config file couldn't load. It must be included with the executable.");
             return;
         }
+        // Fin Lectura de configuración
 
         File dirHTML = new File(stringDirColEn);
 
         File[] arrayHTMLfile = dirHTML.listFiles();
 
+        // Inicio de operaciones
         long start = System.currentTimeMillis();
 
+        // Filtrado HTML
         for (File arrayHTMLfile1 : arrayHTMLfile) {
 
             ArrayList<String> tokenList;
@@ -92,7 +96,9 @@ public class SRI {
             if (tokenList.size() < minNumWords) {
                 minNumWords = tokenList.size();
             }
+            // Fin Filtrado HTML
 
+            // Módulo Stopper
             tokenList = HTMLfilter.stopper(tokenList, stopWordSet, dirResources, stopWordFilename);
             if (tokenList == null) {
                 continue;
@@ -103,11 +109,11 @@ public class SRI {
             try (FileWriter wr = new FileWriter(stringDirColEnStop + file.replace(".html", ".txt"))) {
                 for (String j : tokenList) {
                     wr.write(j + "\n");
-                    Integer oldValue = cleanedWords.get(j);
-                    if (oldValue == null) {
-                        cleanedWords.put(j, 1);
+                    FrequentWord fw = cleanedWords.get(j);
+                    if (fw == null) {
+                        cleanedWords.put(j, new FrequentWord(j));
                     } else {
-                        cleanedWords.put(j, oldValue + 1);
+                        fw.addCount();
                     }
                 }
             } catch (Exception e) {
@@ -121,7 +127,9 @@ public class SRI {
             if (tokenList.size() < minNumWords2) {
                 minNumWords2 = tokenList.size();
             }
+            // Fin Módulo Stopper
 
+            // Módulo Stemmer
             tokenList = HTMLfilter.stemmer(tokenList);
             if (tokenList == null) {
                 continue;
@@ -132,20 +140,29 @@ public class SRI {
             try (FileWriter wr = new FileWriter(stringDirColEnStem + file.replace(".html", ".txt"))) {
                 for (String j : tokenList) {
                     wr.write(j + "\n");
-                    Integer oldValue = stemmedWords.get(j);
-                    if (oldValue == null) {
-                        stemmedWords.put(j, 1);
+                    FrequentWord fw = stemmedWords.get(j);
+                    if (fw == null) {
+                        stemmedWords.put(j, new FrequentWord(j));
                     } else {
-                        stemmedWords.put(j, oldValue + 1);
+                        fw.addCount();
                     }
                 }
             } catch (Exception e) {
                 System.out.println("Failed saving stemmed file " + file);
             }
+            // Fin Módulo Stemmer
 
         }
 
+        // Generación de listas de palabras frecuentes
+        PriorityQueue<FrequentWord> frequentCleanedWords = new PriorityQueue(cleanedWords.values());
+        PriorityQueue<FrequentWord> frequentStemmedWords = new PriorityQueue(stemmedWords.values());
+
+        // Fin de operaciónes
         long end = System.currentTimeMillis();
+
+        // Estadísticas
+        FrequentWord fw;
 
         System.out.println(
                 "Operation was completed in " + (end - start) + " milliseconds.");
@@ -171,13 +188,38 @@ public class SRI {
                 "Min number of words after cleaning in documents: " + minNumWords2);
         System.out.println(
                 "Max Number of words after cleaning in documents: " + maxNumWords2);
+        System.out.println(
+                "Top 5 frequent words after cleaning: ");
+        fw = frequentCleanedWords.poll();
+        System.out.println("   " + fw.getWord() + " with " + fw.getCount() + " apparitions in documents.");
+        fw = frequentCleanedWords.poll();
+        System.out.println("   " + fw.getWord() + " with " + fw.getCount() + " apparitions in documents.");
+        fw = frequentCleanedWords.poll();
+        System.out.println("   " + fw.getWord() + " with " + fw.getCount() + " apparitions in documents.");
+        fw = frequentCleanedWords.poll();
+        System.out.println("   " + fw.getWord() + " with " + fw.getCount() + " apparitions in documents.");
+        fw = frequentCleanedWords.poll();
+        System.out.println("   " + fw.getWord() + " with " + fw.getCount() + " apparitions in documents.");
         System.out.println();
 
         System.out.println(
                 "Number of unique words after stemming: " + stemmedWords.size());
         System.out.println(
                 "Average unique words after stemming: " + stemmedWords.size() / arrayHTMLfile.length);
+        System.out.println(
+                "Top 5 frequent words after stemming: ");
+        fw = frequentStemmedWords.poll();
+        System.out.println("   " + fw.getWord() + " with " + fw.getCount() + " apparitions in documents.");
+        fw = frequentStemmedWords.poll();
+        System.out.println("   " + fw.getWord() + " with " + fw.getCount() + " apparitions in documents.");
+        fw = frequentStemmedWords.poll();
+        System.out.println("   " + fw.getWord() + " with " + fw.getCount() + " apparitions in documents.");
+        fw = frequentStemmedWords.poll();
+        System.out.println("   " + fw.getWord() + " with " + fw.getCount() + " apparitions in documents.");
+        fw = frequentStemmedWords.poll();
+        System.out.println("   " + fw.getWord() + " with " + fw.getCount() + " apparitions in documents.");
         System.out.println();
+        // Fin Estadísticas
 
     }
 

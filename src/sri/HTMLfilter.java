@@ -8,7 +8,6 @@ import org.jsoup.Jsoup;
 import org.jsoup.nodes.Document;
 import org.jsoup.select.Elements;
 import org.tartarus.snowball.*;
-import org.tartarus.snowball.ext.englishStemmer;
 
 /**
  *
