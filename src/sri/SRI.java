@@ -16,18 +16,6 @@ public class SRI {
      */
     public static void main(String[] args) {
 
-        int numWords = 0;
-        int minNumWords = Integer.MAX_VALUE;
-        int maxNumWords = Integer.MIN_VALUE;
-
-        int numWords2 = 0;
-        int minNumWords2 = Integer.MAX_VALUE;
-        int maxNumWords2 = Integer.MIN_VALUE;
-
-        Set<String> stopWordSet = new HashSet(800);
-        Map<String, FrequentWord> cleanedWords = new HashMap(25000);
-        Map<String, FrequentWord> stemmedWords = new HashMap(20000);
-
         String debug = "false";
         String dirResources = null;
         String stopWordFilename = null;
@@ -114,6 +102,20 @@ public class SRI {
         }
         // Fin Lectura de configuración
 
+        int numWords = 0;
+        int minNumWords = Integer.MAX_VALUE;
+        int maxNumWords = Integer.MIN_VALUE;
+
+        int numWords2 = 0;
+        int minNumWords2 = Integer.MAX_VALUE;
+        int maxNumWords2 = Integer.MIN_VALUE;
+
+        Set<String> stopWordSet = new HashSet(800);
+        Vector<String> wordDictionary = new Vector(20000);
+        Map<String, Integer> idDictionary = new HashMap(20000);
+        Map<Integer, FrequentWord> cleanedWords = new HashMap(25000);
+        Map<Integer, FrequentWord> stemmedWords = new HashMap(20000);
+
         File dirHTML = new File(stringDirColEn);
 
         File[] arrayHTMLfile = dirHTML.listFiles();
@@ -167,9 +169,15 @@ public class SRI {
             try (FileWriter wr = new FileWriter(stringDirColEnStop + file.replace(".html", ".txt"))) {
                 for (String j : tokenList) {
                     wr.write(j + "\n");
-                    FrequentWord fw = cleanedWords.get(j);
+                    if (idDictionary.get(j) == null) {
+                        Word newWord = new Word(j);
+                        idDictionary.put(j, newWord.getID());
+                        wordDictionary.add(newWord.getID(), j);
+                    }
+                    Integer idWord = idDictionary.get(j);
+                    FrequentWord fw = cleanedWords.get(idWord);
                     if (fw == null) {
-                        cleanedWords.put(j, new FrequentWord(j));
+                        cleanedWords.put(idWord, new FrequentWord(idWord));
                     } else {
                         fw.addCount();
                     }
@@ -198,9 +206,15 @@ public class SRI {
             try (FileWriter wr = new FileWriter(stringDirColEnStem + file.replace(".html", ".txt"))) {
                 for (String j : tokenList) {
                     wr.write(j + "\n");
-                    FrequentWord fw = stemmedWords.get(j);
+                    if (idDictionary.get(j) == null) {
+                        Word newWord = new Word(j);
+                        idDictionary.put(j, newWord.getID());
+                        wordDictionary.add(newWord.getID(), j);
+                    }
+                    Integer idWord = idDictionary.get(j);
+                    FrequentWord fw = stemmedWords.get(idWord);
                     if (fw == null) {
-                        stemmedWords.put(j, new FrequentWord(j));
+                        stemmedWords.put(idWord, new FrequentWord(idWord));
                     } else {
                         fw.addCount();
                     }
@@ -318,23 +332,23 @@ public class SRI {
         fw = nfrequentCleanedWords.removeFirst();
 
         System.out.println(
-                "   " + fw.getWord() + " with " + fw.getCount() + " apparitions in documents.");
+                "   " + wordDictionary.get(fw.getID()) + " with " + fw.getCount() + " apparitions in documents.");
         fw = nfrequentCleanedWords.removeFirst();
 
         System.out.println(
-                "   " + fw.getWord() + " with " + fw.getCount() + " apparitions in documents.");
+                "   " + wordDictionary.get(fw.getID()) + " with " + fw.getCount() + " apparitions in documents.");
         fw = nfrequentCleanedWords.removeFirst();
 
         System.out.println(
-                "   " + fw.getWord() + " with " + fw.getCount() + " apparitions in documents.");
+                "   " + wordDictionary.get(fw.getID()) + " with " + fw.getCount() + " apparitions in documents.");
         fw = nfrequentCleanedWords.removeFirst();
 
         System.out.println(
-                "   " + fw.getWord() + " with " + fw.getCount() + " apparitions in documents.");
+                "   " + wordDictionary.get(fw.getID()) + " with " + fw.getCount() + " apparitions in documents.");
         fw = nfrequentCleanedWords.removeFirst();
 
         System.out.println(
-                "   " + fw.getWord() + " with " + fw.getCount() + " apparitions in documents.");
+                "   " + wordDictionary.get(fw.getID()) + " with " + fw.getCount() + " apparitions in documents.");
         System.out.println();
 
         System.out.println(
@@ -346,27 +360,26 @@ public class SRI {
         fw = nfrequentStemmedWords.removeFirst();
 
         System.out.println(
-                "   " + fw.getWord() + " with " + fw.getCount() + " apparitions in documents.");
+                "   " + wordDictionary.get(fw.getID()) + " with " + fw.getCount() + " apparitions in documents.");
         fw = nfrequentStemmedWords.removeFirst();
 
         System.out.println(
-                "   " + fw.getWord() + " with " + fw.getCount() + " apparitions in documents.");
+                "   " + wordDictionary.get(fw.getID()) + " with " + fw.getCount() + " apparitions in documents.");
         fw = nfrequentStemmedWords.removeFirst();
 
         System.out.println(
-                "   " + fw.getWord() + " with " + fw.getCount() + " apparitions in documents.");
+                "   " + wordDictionary.get(fw.getID()) + " with " + fw.getCount() + " apparitions in documents.");
         fw = nfrequentStemmedWords.removeFirst();
 
         System.out.println(
-                "   " + fw.getWord() + " with " + fw.getCount() + " apparitions in documents.");
+                "   " + wordDictionary.get(fw.getID()) + " with " + fw.getCount() + " apparitions in documents.");
         fw = nfrequentStemmedWords.removeFirst();
 
         System.out.println(
-                "   " + fw.getWord() + " with " + fw.getCount() + " apparitions in documents.");
+                "   " + wordDictionary.get(fw.getID()) + " with " + fw.getCount() + " apparitions in documents.");
         System.out.println();
-         // Fin Estadísticas
+        // Fin Estadísticas
 
-        return;
     }
 
 }

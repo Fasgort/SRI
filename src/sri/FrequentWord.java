@@ -6,11 +6,11 @@ package sri;
  */
 public class FrequentWord implements Comparable<FrequentWord> {
 
-    final private String word;
+    final private Integer idWord;
     private int count;
 
-    public FrequentWord(String _word) {
-        word = _word;
+    public FrequentWord(Integer _idWord) {
+        idWord = _idWord;
         count = 1;
     }
 
@@ -18,8 +18,8 @@ public class FrequentWord implements Comparable<FrequentWord> {
         count++;
     }
 
-    public String getWord() {
-        return word;
+    public Integer getID() {
+        return idWord;
     }
 
     public int getCount() {
