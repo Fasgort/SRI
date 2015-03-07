@@ -213,12 +213,10 @@ public class SRI {
         }
 
         // Generación de listas de palabras frecuentes
-        long startnewCleaned = System.currentTimeMillis();
         Collection<FrequentWord> collectCleaned = cleanedWords.values();
         Iterator<FrequentWord> itc = collectCleaned.iterator();
         LinkedList<FrequentWord> nfrequentCleanedWords = new LinkedList();
 
-        
         int minC = 0;
         while (itc.hasNext()) {
             FrequentWord fw = itc.next();
@@ -249,9 +247,6 @@ public class SRI {
                 }
             }
         }
-        
-        long endnewCleaned = System.currentTimeMillis();
-        long startnewStemmed = System.currentTimeMillis();
 
         Collection<FrequentWord> collectStemmed = stemmedWords.values();
         Iterator<FrequentWord> its = collectStemmed.iterator();
@@ -287,15 +282,6 @@ public class SRI {
                 }
             }
         }
-        long endnewStemmed = System.currentTimeMillis();
-
-        // Ineficiente pero funcional
-        long startoldCleaned = System.currentTimeMillis();
-        PriorityQueue<FrequentWord> frequentCleanedWords = new PriorityQueue(cleanedWords.values());
-        long endoldCleaned = System.currentTimeMillis();
-        long startoldStemmed = System.currentTimeMillis();
-        PriorityQueue<FrequentWord> frequentStemmedWords = new PriorityQueue(stemmedWords.values());
-        long endoldStemmed = System.currentTimeMillis();
 
         // Fin de operaciónes
         long end = System.currentTimeMillis();
@@ -303,145 +289,82 @@ public class SRI {
         // Estadísticas
         FrequentWord fw;
 
-        /*
-         System.out.println(
-         "Operation was completed in " + (end - start) + " milliseconds.");
-         System.out.println();
+        System.out.println(
+                "Operation was completed in " + (end - start) + " milliseconds.");
+        System.out.println();
 
-         System.out.println(
-         "Number of words after filtering: " + numWords);
-         System.out.println(
-         "Average words after filtering: " + numWords / arrayHTMLfile.length);
-         System.out.println(
-         "Min number of words after filtering in documents: " + minNumWords);
-         System.out.println(
-         "Max Number of words after filtering in documents: " + maxNumWords);
-         System.out.println();
+        System.out.println(
+                "Number of words after filtering: " + numWords);
+        System.out.println(
+                "Average words after filtering: " + numWords / arrayHTMLfile.length);
+        System.out.println(
+                "Min number of words after filtering in documents: " + minNumWords);
+        System.out.println(
+                "Max Number of words after filtering in documents: " + maxNumWords);
+        System.out.println();
 
-         System.out.println(
-         "Number of words after cleaning: " + numWords2);
-         System.out.println(
-         "Number of unique words after cleaning: " + cleanedWords.size());
-         System.out.println(
-         "Average words after cleaning: " + numWords2 / arrayHTMLfile.length);
-         System.out.println(
-         "Min number of words after cleaning in documents: " + minNumWords2);
-         System.out.println(
-         "Max Number of words after cleaning in documents: " + maxNumWords2);
-         System.out.println(
-         "Top 5 frequent words after cleaning: ");
-         fw = nfrequentCleanedWords.removeFirst();
+        System.out.println(
+                "Number of words after cleaning: " + numWords2);
+        System.out.println(
+                "Number of unique words after cleaning: " + cleanedWords.size());
+        System.out.println(
+                "Average words after cleaning: " + numWords2 / arrayHTMLfile.length);
+        System.out.println(
+                "Min number of words after cleaning in documents: " + minNumWords2);
+        System.out.println(
+                "Max Number of words after cleaning in documents: " + maxNumWords2);
+        System.out.println(
+                "Top 5 frequent words after cleaning: ");
+        fw = nfrequentCleanedWords.removeFirst();
 
-         System.out.println(
-         "   " + fw.getWord() + " with " + fw.getCount() + " apparitions in documents.");
-         fw = nfrequentCleanedWords.removeFirst();
+        System.out.println(
+                "   " + fw.getWord() + " with " + fw.getCount() + " apparitions in documents.");
+        fw = nfrequentCleanedWords.removeFirst();
 
-         System.out.println(
-         "   " + fw.getWord() + " with " + fw.getCount() + " apparitions in documents.");
-         fw = nfrequentCleanedWords.removeFirst();
+        System.out.println(
+                "   " + fw.getWord() + " with " + fw.getCount() + " apparitions in documents.");
+        fw = nfrequentCleanedWords.removeFirst();
 
-         System.out.println(
-         "   " + fw.getWord() + " with " + fw.getCount() + " apparitions in documents.");
-         fw = nfrequentCleanedWords.removeFirst();
+        System.out.println(
+                "   " + fw.getWord() + " with " + fw.getCount() + " apparitions in documents.");
+        fw = nfrequentCleanedWords.removeFirst();
 
-         System.out.println(
-         "   " + fw.getWord() + " with " + fw.getCount() + " apparitions in documents.");
-         fw = nfrequentCleanedWords.removeFirst();
+        System.out.println(
+                "   " + fw.getWord() + " with " + fw.getCount() + " apparitions in documents.");
+        fw = nfrequentCleanedWords.removeFirst();
 
-         System.out.println(
-         "   " + fw.getWord() + " with " + fw.getCount() + " apparitions in documents.");
-         System.out.println();
+        System.out.println(
+                "   " + fw.getWord() + " with " + fw.getCount() + " apparitions in documents.");
+        System.out.println();
 
-         System.out.println(
-         "Number of unique words after stemming: " + stemmedWords.size());
-         System.out.println(
-         "Average unique words after stemming: " + stemmedWords.size() / arrayHTMLfile.length);
-         System.out.println(
-         "Top 5 frequent words after stemming: ");
-         fw = nfrequentStemmedWords.removeFirst();
+        System.out.println(
+                "Number of unique words after stemming: " + stemmedWords.size());
+        System.out.println(
+                "Average unique words after stemming: " + stemmedWords.size() / arrayHTMLfile.length);
+        System.out.println(
+                "Top 5 frequent words after stemming: ");
+        fw = nfrequentStemmedWords.removeFirst();
 
-         System.out.println(
-         "   " + fw.getWord() + " with " + fw.getCount() + " apparitions in documents.");
-         fw = nfrequentStemmedWords.removeFirst();
+        System.out.println(
+                "   " + fw.getWord() + " with " + fw.getCount() + " apparitions in documents.");
+        fw = nfrequentStemmedWords.removeFirst();
 
-         System.out.println(
-         "   " + fw.getWord() + " with " + fw.getCount() + " apparitions in documents.");
-         fw = nfrequentStemmedWords.removeFirst();
+        System.out.println(
+                "   " + fw.getWord() + " with " + fw.getCount() + " apparitions in documents.");
+        fw = nfrequentStemmedWords.removeFirst();
 
-         System.out.println(
-         "   " + fw.getWord() + " with " + fw.getCount() + " apparitions in documents.");
-         fw = nfrequentStemmedWords.removeFirst();
+        System.out.println(
+                "   " + fw.getWord() + " with " + fw.getCount() + " apparitions in documents.");
+        fw = nfrequentStemmedWords.removeFirst();
 
-         System.out.println(
-         "   " + fw.getWord() + " with " + fw.getCount() + " apparitions in documents.");
-         fw = nfrequentStemmedWords.removeFirst();
+        System.out.println(
+                "   " + fw.getWord() + " with " + fw.getCount() + " apparitions in documents.");
+        fw = nfrequentStemmedWords.removeFirst();
 
-         System.out.println(
-         "   " + fw.getWord() + " with " + fw.getCount() + " apparitions in documents.");
-         System.out.println();
+        System.out.println(
+                "   " + fw.getWord() + " with " + fw.getCount() + " apparitions in documents.");
+        System.out.println();
          // Fin Estadísticas
-        
-        
-        
-        
-         System.out.println(
-         "Top 5 frequent words after cleaning: ");
-         fw = frequentCleanedWords.poll();
-         System.out.println("   " + fw.getWord() + " with " + fw.getCount() + " apparitions in documents.");
-         fw = frequentCleanedWords.poll();
-         System.out.println("   " + fw.getWord() + " with " + fw.getCount() + " apparitions in documents.");
-         fw = frequentCleanedWords.poll();
-         System.out.println("   " + fw.getWord() + " with " + fw.getCount() + " apparitions in documents.");
-         fw = frequentCleanedWords.poll();
-         System.out.println("   " + fw.getWord() + " with " + fw.getCount() + " apparitions in documents.");
-         fw = frequentCleanedWords.poll();
-         System.out.println("   " + fw.getWord() + " with " + fw.getCount() + " apparitions in documents.");
-         System.out.println();
-
-         System.out.println(
-         "Top 5 frequent words after stemming: ");
-         fw = frequentStemmedWords.poll();
-         System.out.println("   " + fw.getWord() + " with " + fw.getCount() + " apparitions in documents.");
-         fw = frequentStemmedWords.poll();
-         System.out.println("   " + fw.getWord() + " with " + fw.getCount() + " apparitions in documents.");
-         fw = frequentStemmedWords.poll();
-         System.out.println("   " + fw.getWord() + " with " + fw.getCount() + " apparitions in documents.");
-         fw = frequentStemmedWords.poll();
-         System.out.println("   " + fw.getWord() + " with " + fw.getCount() + " apparitions in documents.");
-         fw = frequentStemmedWords.poll();
-         System.out.println("   " + fw.getWord() + " with " + fw.getCount() + " apparitions in documents.");
-         System.out.println();
-
-         */
-        System.out.println("TEST: New clean list");
-        int tamlist = nfrequentCleanedWords.size();
-        System.out.println("Generado en " + (endnewCleaned - startnewCleaned) + " milisegundos.");
-        for (int i = 0; i < tamlist; i++) {
-            fw = nfrequentCleanedWords.poll();
-            System.out.println("   " + fw.getWord() + " with " + fw.getCount() + " apparitions in documents.");
-        }
-        
-        System.out.println("TEST: Old clean list");
-        System.out.println("Generado en " + (endoldCleaned - startoldCleaned) + " milisegundos.");
-        for (int i = 0; i < 5; i++) {
-            fw = frequentCleanedWords.poll();
-            System.out.println("   " + fw.getWord() + " with " + fw.getCount() + " apparitions in documents.");
-        }
-        
-        System.out.println("TEST: New stemmed list");
-        int tamlist2 = nfrequentStemmedWords.size();
-        System.out.println("Generado en " + (endnewStemmed - startnewStemmed) + " milisegundos.");
-        for (int i = 0; i < tamlist2; i++) {
-            fw = nfrequentStemmedWords.poll();
-            System.out.println("   " + fw.getWord() + " with " + fw.getCount() + " apparitions in documents.");
-        }
-        
-        System.out.println("TEST: Old stemmed list");
-        System.out.println("Generado en " + (endoldStemmed - startoldStemmed) + " milisegundos.");
-        for (int i = 0; i < 5; i++) {
-            fw = frequentStemmedWords.poll();
-            System.out.println("   " + fw.getWord() + " with " + fw.getCount() + " apparitions in documents.");
-        }
 
         return;
     }
