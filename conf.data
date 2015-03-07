@@ -1,7 +1,7 @@
-not-enabled
-./resources/
-englishST.txt
-./coleccionEn/
-./coleccionEnNormalized/
-./coleccionEnStopped/
-./coleccionEnStemmed/
+debug = false
+dirResources = ./resources/
+stopWordFilename = englishST.txt
+stringDirColEn = ./coleccionEn/
+stringDirColEnN = ./coleccionEnNormalized/
+stringDirColEnStop = ./coleccionEnStopped/
+stringDirColEnStem = ./coleccionEnStemmed/
