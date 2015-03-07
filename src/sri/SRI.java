@@ -111,8 +111,10 @@ public class SRI {
         int maxNumWords2 = Integer.MIN_VALUE;
 
         Set<String> stopWordSet = new HashSet(800);
-        Vector<String> wordDictionary = new Vector(20000);
-        Map<String, Integer> idDictionary = new HashMap(20000);
+        ArrayList<String> wordDictionary = new ArrayList(20000);
+        ArrayList<String> fileDictionary = new ArrayList(200);
+        Map<String, Integer> idWordDictionary = new HashMap(30000);
+        Map<String, Integer> idFileDictionary = new HashMap(300);
         Map<Integer, FrequentWord> cleanedWords = new HashMap(25000);
         Map<Integer, FrequentWord> stemmedWords = new HashMap(20000);
 
@@ -129,6 +131,11 @@ public class SRI {
             ArrayList<String> tokenList;
 
             String file = arrayHTMLfile1.getName();
+            if (idFileDictionary.get(file) == null) {
+                IndexedFile newFile = new IndexedFile(file);
+                idFileDictionary.put(file, newFile.getID());
+                fileDictionary.add(newFile.getID(), file);
+            }
             String textFiltered = HTMLfilter.filterEN(stringDirColEn, file);
             if (textFiltered == null) {
                 if (debug.contentEquals("true")) {
@@ -169,12 +176,12 @@ public class SRI {
             try (FileWriter wr = new FileWriter(stringDirColEnStop + file.replace(".html", ".txt"))) {
                 for (String j : tokenList) {
                     wr.write(j + "\n");
-                    if (idDictionary.get(j) == null) {
-                        Word newWord = new Word(j);
-                        idDictionary.put(j, newWord.getID());
+                    if (idWordDictionary.get(j) == null) {
+                        IndexedWord newWord = new IndexedWord(j);
+                        idWordDictionary.put(j, newWord.getID());
                         wordDictionary.add(newWord.getID(), j);
                     }
-                    Integer idWord = idDictionary.get(j);
+                    Integer idWord = idWordDictionary.get(j);
                     FrequentWord fw = cleanedWords.get(idWord);
                     if (fw == null) {
                         cleanedWords.put(idWord, new FrequentWord(idWord));
@@ -206,12 +213,12 @@ public class SRI {
             try (FileWriter wr = new FileWriter(stringDirColEnStem + file.replace(".html", ".txt"))) {
                 for (String j : tokenList) {
                     wr.write(j + "\n");
-                    if (idDictionary.get(j) == null) {
-                        Word newWord = new Word(j);
-                        idDictionary.put(j, newWord.getID());
+                    if (idWordDictionary.get(j) == null) {
+                        IndexedWord newWord = new IndexedWord(j);
+                        idWordDictionary.put(j, newWord.getID());
                         wordDictionary.add(newWord.getID(), j);
                     }
-                    Integer idWord = idDictionary.get(j);
+                    Integer idWord = idWordDictionary.get(j);
                     FrequentWord fw = stemmedWords.get(idWord);
                     if (fw == null) {
                         stemmedWords.put(idWord, new FrequentWord(idWord));

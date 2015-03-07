@@ -4,13 +4,13 @@ package sri;
  *
  * @author Fasgort
  */
-public class Word implements Comparable<Word> {
+public class IndexedWord implements Comparable<IndexedWord> {
 
     static private Integer idNext = 0;
     final private String word;
     final private Integer idWord;
 
-    public Word(String _word) {
+    public IndexedWord(String _word) {
         word = _word;
         idWord = idNext++;
     }
@@ -24,7 +24,7 @@ public class Word implements Comparable<Word> {
     }
 
     @Override
-    public int compareTo(Word w) {
+    public int compareTo(IndexedWord w) {
         return idWord - w.idWord;
     }
 
