@@ -4,12 +4,12 @@ package sri;
  *
  * @author Fasgort
  */
-public class FrequentWord implements Comparable<FrequentWord> {
+public class WordFrequency implements Comparable<WordFrequency> {
 
     final private Integer idWord;
     private int count;
 
-    public FrequentWord(Integer _idWord) {
+    public WordFrequency(Integer _idWord) {
         idWord = _idWord;
         count = 1;
     }
@@ -27,7 +27,7 @@ public class FrequentWord implements Comparable<FrequentWord> {
     }
 
     @Override
-    public int compareTo(FrequentWord w) {
+    public int compareTo(WordFrequency w) {
         return w.count - count;
     }
 
