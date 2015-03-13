@@ -113,10 +113,10 @@ public class SRI {
         // DATA STRUCTURES
         Set<String> stopWordSet = new HashSet(800); // Stop Word Dictionary
         ArrayList<String> wordDictionary = new ArrayList(10000); // Word Dictionary ID -> word
-        Map<String, Integer> idFileDictionary = new HashMap(300); // Word Dictionary file -> ID
-        ArrayList<String> fileDictionary = new ArrayList(200); // File Dictionary ID -> file
         Map<String, Integer> idWordDictionary = new HashMap(30000); // Word Dictionary word -> ID
-        ArrayList<Map<Integer, FileFrequency>> wordFrequency = new ArrayList(10000); // Word -> File Frequency
+        ArrayList<String> fileDictionary = new ArrayList(200); // File Dictionary ID -> file
+        Map<String, Integer> idFileDictionary = new HashMap(300); // File Dictionary file -> ID
+        ArrayList<Map<Integer, FileFrequency>> wordFrequency = new ArrayList(10000); // Main Data Structure for word frequency
         Map<Integer, WordFrequency> stemmedWords = new HashMap(20000); //Temporary. Being only used for stats.
 
         // Lectura de directorio
@@ -214,7 +214,7 @@ public class SRI {
                 for (String j : tokenList) {
                     wr.write(j + "\n");
                     Integer idWord = idWordDictionary.get(j);
-                    
+
                     // Agregación de palabras al diccionario
                     if (idWord == null) {
                         IndexedWord newWord = new IndexedWord(j);
@@ -223,7 +223,7 @@ public class SRI {
                         wordDictionary.add(idWord, j);
                         wordFrequency.add(idWord, new HashMap(10000));
                     }
-                    
+
                     // Actualizamos frecuencia de la palabra en el documento
                     FileFrequency ff;
                     ff = wordFrequency.get(idWord).get(idFile);
@@ -232,7 +232,7 @@ public class SRI {
                     } else {
                         ff.addCount();
                     }
-                    
+
                     // Actualizamos frequencia de la palabra (temporal, usado sólo para estadísticas)
                     WordFrequency fw;
                     fw = stemmedWords.get(idWord);
@@ -241,7 +241,7 @@ public class SRI {
                     } else {
                         fw.addCount();
                     }
-                    
+
                 }
             } catch (Exception e) {
                 System.out.println("Failed saving stemmed file " + file);
@@ -344,21 +344,22 @@ public class SRI {
                 "   " + wordDictionary.get(fw.getID()) + " with " + fw.getCount() + " apparitions in documents.");
         System.out.println();
         // Fin Estadísticas
-        
-        /* //Playground
-        String palabra = "camera";
-        Integer idPalabra = idWordDictionary.get(palabra);
-        Collection<FileFrequency> aparicionesPalabra = wordFrequency.get(idPalabra).values();
-        Iterator<FileFrequency> it = aparicionesPalabra.iterator();
-        
-        while(it.hasNext()){
-            FileFrequency ff = it.next();
-            Integer idFile = ff.getID();
-            String documento = fileDictionary.get(idFile);
-            System.out.println("La palabra " + palabra + " aparece en el documento " + documento + " " + ff.getCount() + " veces.");
-        }
-        */ //End Playground
 
+        /*
+         //Playground
+         String palabra = "camera";
+         Integer idPalabra = idWordDictionary.get(palabra);
+         Collection<FileFrequency> aparicionesPalabra = wordFrequency.get(idPalabra).values();
+         Iterator<FileFrequency> it = aparicionesPalabra.iterator();
+        
+         while(it.hasNext()){
+         FileFrequency ff = it.next();
+         Integer idFile = ff.getID();
+         String documento = fileDictionary.get(idFile);
+         System.out.println("La palabra " + palabra + " aparece en el documento " + documento + " " + ff.getCount() + " veces.");
+         }
+         //End Playground
+         */
     }
 
 }
