@@ -1,9 +1,15 @@
 package sri;
 
-import java.io.*;
-import java.util.*;
-import java.util.regex.Pattern;
+import java.io.BufferedReader;
+import java.io.File;
+import java.io.FileReader;
+import java.io.FileWriter;
+import java.util.ArrayList;
+import java.util.HashSet;
+import java.util.LinkedList;
+import java.util.Set;
 import java.util.regex.Matcher;
+import java.util.regex.Pattern;
 
 /**
  *
@@ -111,13 +117,8 @@ public class SRI {
         int maxNumWords2 = Integer.MIN_VALUE;
 
         // DATA STRUCTURES
+        DataManager dataManager = DataManager.getInstance();
         Set<String> stopWordSet = new HashSet(800); // Stop Word Dictionary
-        ArrayList<String> wordDictionary = new ArrayList(10000); // Word Dictionary ID -> word
-        Map<String, Integer> idWordDictionary = new HashMap(30000); // Word Dictionary word -> ID
-        ArrayList<String> fileDictionary = new ArrayList(200); // File Dictionary ID -> file
-        Map<String, Integer> idFileDictionary = new HashMap(300); // File Dictionary file -> ID
-        ArrayList<Map<Integer, FileFrequency>> wordFrequency = new ArrayList(10000); // Main Data Structure for word frequency
-        Map<Integer, WordFrequency> stemmedWords = new HashMap(20000); //Temporary. Being only used for stats.
 
         // Lectura de directorio
         File dirHTML = new File(stringDirColEn);
@@ -141,19 +142,13 @@ public class SRI {
             ArrayList<String> tokenList;
 
             String file = arrayHTMLfile1.getName();
-            Integer idFile = idFileDictionary.get(file);
+            Integer idFile = dataManager.searchFile(file);
             String textFiltered = HTMLfilter.filterEN(stringDirColEn, file);
             if (textFiltered == null) {
                 if (debug.contentEquals("true")) {
                     System.out.println("File " + file + " was ignored and won't be included in the SE.");
                 }
                 continue;
-            }
-            if (idFile == null) {
-                IndexedFile newFile = new IndexedFile(file);
-                idFile = newFile.getID();
-                idFileDictionary.put(file, idFile);
-                fileDictionary.add(idFile, file);
             }
 
             tokenList = HTMLfilter.normalize(textFiltered);
@@ -213,35 +208,8 @@ public class SRI {
             try (FileWriter wr = new FileWriter(stringDirColEnStem + file.replace(".html", ".txt"))) {
                 for (String j : tokenList) {
                     wr.write(j + "\n");
-                    Integer idWord = idWordDictionary.get(j);
-
-                    // Agregación de palabras al diccionario
-                    if (idWord == null) {
-                        IndexedWord newWord = new IndexedWord(j);
-                        idWord = newWord.getID();
-                        idWordDictionary.put(j, idWord);
-                        wordDictionary.add(idWord, j);
-                        wordFrequency.add(idWord, new HashMap(10000));
-                    }
-
-                    // Actualizamos frecuencia de la palabra en el documento
-                    FileFrequency ff;
-                    ff = wordFrequency.get(idWord).get(idFile);
-                    if (ff == null) {
-                        wordFrequency.get(idWord).put(idFile, new FileFrequency(idFile));
-                    } else {
-                        ff.addCount();
-                    }
-
-                    // Actualizamos frequencia de la palabra (temporal, usado sólo para estadísticas)
-                    WordFrequency fw;
-                    fw = stemmedWords.get(idWord);
-                    if (fw == null) {
-                        stemmedWords.put(idWord, new WordFrequency(idWord));
-                    } else {
-                        fw.addCount();
-                    }
-
+                    Integer idWord = dataManager.searchWord(j);
+                    dataManager.addFrequency(idWord, idFile);
                 }
             } catch (Exception e) {
                 System.out.println("Failed saving stemmed file " + file);
@@ -251,46 +219,13 @@ public class SRI {
         }
 
         // Generación de listas de palabras frecuentes
-        Collection<WordFrequency> collectStemmed = stemmedWords.values();
-        Iterator<WordFrequency> its = collectStemmed.iterator();
-        LinkedList<WordFrequency> nfrequentStemmedWords = new LinkedList();
-
-        int minS = 0;
-        while (its.hasNext()) {
-            WordFrequency fw = its.next();
-            if (fw.getCount() > minS || nfrequentStemmedWords.size() < 5) {
-                if (nfrequentStemmedWords.size() == 0) {
-                    nfrequentStemmedWords.add(fw);
-                } else {
-                    Iterator<WordFrequency> nsw = nfrequentStemmedWords.descendingIterator();
-                    int index = nfrequentStemmedWords.size();
-                    boolean added = false;
-                    while (nsw.hasNext()) {
-                        WordFrequency fw2 = nsw.next();
-                        if (fw.getCount() <= fw2.getCount()) {
-                            nfrequentStemmedWords.add(index, fw);
-                            added = true;
-                            break;
-                        } else {
-                            index--;
-                        }
-                    }
-                    if (!added) {
-                        nfrequentStemmedWords.addFirst(fw);
-                    }
-                }
-                if (nfrequentStemmedWords.size() > 5) {
-                    minS = nfrequentStemmedWords.getLast().getCount();
-                    nfrequentStemmedWords.removeLast();
-                }
-            }
-        }
+        LinkedList<WordData> top5FrequentWords = dataManager.topFrequentWords(5);
 
         // Fin de operaciónes
         long end = System.currentTimeMillis();
 
         // Estadísticas
-        WordFrequency fw;
+        WordData wd;
 
         System.out.println(
                 "Operation was completed in " + (end - start) + " milliseconds.");
@@ -317,49 +252,29 @@ public class SRI {
         System.out.println();
 
         System.out.println(
-                "Number of unique words after stemming: " + stemmedWords.size());
+                "Number of unique words after stemming: " + dataManager.wordQuantity());
         System.out.println(
-                "Average unique words after stemming: " + stemmedWords.size() / arrayHTMLfile.length);
+                "Average unique words after stemming: " + dataManager.wordQuantity() / arrayHTMLfile.length);
         System.out.println(
                 "Top 5 frequent words after stemming: ");
-        fw = nfrequentStemmedWords.removeFirst();
 
-        System.out.println(
-                "   " + wordDictionary.get(fw.getID()) + " with " + fw.getCount() + " apparitions in documents.");
-        fw = nfrequentStemmedWords.removeFirst();
+        wd = top5FrequentWords.removeFirst();
+        System.out.println("   " + dataManager.searchWord(wd.getID()) + " with " + wd.getCount() + " apparitions in documents.");
 
-        System.out.println(
-                "   " + wordDictionary.get(fw.getID()) + " with " + fw.getCount() + " apparitions in documents.");
-        fw = nfrequentStemmedWords.removeFirst();
+        wd = top5FrequentWords.removeFirst();
+        System.out.println("   " + dataManager.searchWord(wd.getID()) + " with " + wd.getCount() + " apparitions in documents.");
 
-        System.out.println(
-                "   " + wordDictionary.get(fw.getID()) + " with " + fw.getCount() + " apparitions in documents.");
-        fw = nfrequentStemmedWords.removeFirst();
+        wd = top5FrequentWords.removeFirst();
+        System.out.println("   " + dataManager.searchWord(wd.getID()) + " with " + wd.getCount() + " apparitions in documents.");
 
-        System.out.println(
-                "   " + wordDictionary.get(fw.getID()) + " with " + fw.getCount() + " apparitions in documents.");
-        fw = nfrequentStemmedWords.removeFirst();
+        wd = top5FrequentWords.removeFirst();
+        System.out.println("   " + dataManager.searchWord(wd.getID()) + " with " + wd.getCount() + " apparitions in documents.");
 
-        System.out.println(
-                "   " + wordDictionary.get(fw.getID()) + " with " + fw.getCount() + " apparitions in documents.");
+        wd = top5FrequentWords.removeFirst();
+        System.out.println("   " + dataManager.searchWord(wd.getID()) + " with " + wd.getCount() + " apparitions in documents.");
         System.out.println();
         // Fin Estadísticas
 
-        /*
-         //Playground
-         String palabra = "camera";
-         Integer idPalabra = idWordDictionary.get(palabra);
-         Collection<FileFrequency> aparicionesPalabra = wordFrequency.get(idPalabra).values();
-         Iterator<FileFrequency> it = aparicionesPalabra.iterator();
-        
-         while(it.hasNext()){
-         FileFrequency ff = it.next();
-         Integer idFile = ff.getID();
-         String documento = fileDictionary.get(idFile);
-         System.out.println("La palabra " + palabra + " aparece en el documento " + documento + " " + ff.getCount() + " veces.");
-         }
-         //End Playground
-         */
     }
 
 }
