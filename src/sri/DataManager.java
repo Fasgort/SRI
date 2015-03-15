@@ -75,11 +75,11 @@ public class DataManager {
                 if (list.size() == 0) {
                     list.add(word1);
                 } else {
-                    Iterator<WordData> nsw = list.descendingIterator();
+                    Iterator<WordData> listIterator = list.descendingIterator();
                     int index = list.size();
                     boolean added = false;
-                    while (nsw.hasNext()) {
-                        WordData word2 = nsw.next();
+                    while (listIterator.hasNext()) {
+                        WordData word2 = listIterator.next();
                         if (word1.getCount() <= word2.getCount()) {
                             list.add(index, word1);
                             added = true;
