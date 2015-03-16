@@ -66,11 +66,13 @@ public class DataManager {
         }
     }
 
-    public void generateFrequency() {
+    public void generateIndex() {
         Iterator<WordData> itw = wordFrequency.iterator();
 
         while (itw.hasNext()) {
-            itw.next().generateFrequency();
+            WordData wd = itw.next();
+            wd.generateIDF(fileDictionary.size());
+            wd.generateWeight();
         }
         
     }

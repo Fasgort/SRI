@@ -44,5 +44,9 @@ public class WordDictionary {
         wordIDs.add(idWord, newWord);
         return idWord;
     }
+    
+    public int size(){
+        return wordIDs.size();
+    }
 
 }
