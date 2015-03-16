@@ -198,6 +198,14 @@ public class SRI {
             // Fin Módulo Stopper
 
             // Módulo Stemmer
+            /*
+            * Idea: Serializar los resultados del módulo Stemmer. Todos los 
+            * ficheros una vez procesados, se serializan en un mismo fichero.
+            * Además se guarda un valor hash de cada fichero y se compara
+            * con el actual para comprobar que se trata del mismo fichero.
+            * Este código hash se puede guardar en la clase IndexedFile.
+            * El stream serializado se debe de guardar en una clase aparte.
+            */
             tokenList = HTMLfilter.stemmer(tokenList);
             if (tokenList == null) {
                 continue;
