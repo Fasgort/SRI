@@ -2,7 +2,10 @@ package sri;
 
 import java.util.ArrayList;
 import java.util.HashMap;
+import java.util.HashSet;
+import java.util.Iterator;
 import java.util.Map;
+import java.util.Set;
 
 /**
  *
@@ -43,6 +46,14 @@ public class FileDictionary {
         files.put(newFile.getFile(), idFile);
         fileIDs.add(idFile, newFile);
         return idFile;
+    }
+
+    public void frequencyBuilt() {
+        Iterator<IndexedFile> it = fileIDs.iterator();
+
+        while (it.hasNext()) {
+            it.next().setBuiltFrequency();
+        }
     }
 
 }

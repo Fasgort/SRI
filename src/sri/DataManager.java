@@ -66,6 +66,15 @@ public class DataManager {
         }
     }
 
+    public void generateFrequency() {
+        Iterator<WordData> itw = wordFrequency.iterator();
+
+        while (itw.hasNext()) {
+            itw.next().generateFrequency();
+        }
+        
+    }
+
     public LinkedList<WordData> topFrequentWords(int sizeList) {
         LinkedList<WordData> list = new LinkedList();
         Iterator<WordData> wordIterator = wordFrequency.iterator();

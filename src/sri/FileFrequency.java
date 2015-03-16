@@ -32,8 +32,9 @@ public class FileFrequency implements Comparable<FileFrequency> {
         return count;
     }
 
-    public void generateFrequency(int maxCount) {
-        frequency = (double) count / (double) maxCount;
+    public void generateFrequency() {
+        if(!file.getBuiltFrequency()) frequency = (double) count / (double) file.getMaxCount();
+        System.out.println("Frecuencia: " + frequency);
     }
 
     public double getFrequency() {

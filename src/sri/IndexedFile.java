@@ -10,11 +10,13 @@ public class IndexedFile implements Comparable<IndexedFile> {
     final private String file;
     final private Integer idFile;
     private int maxCount;
+    private boolean builtFrequency;
 
     public IndexedFile(String _file) {
         file = _file;
         idFile = idNext++;
         maxCount = 1;
+        builtFrequency = false;
     }
 
     public String getFile() {
@@ -31,6 +33,14 @@ public class IndexedFile implements Comparable<IndexedFile> {
     
     public int getMaxCount(){
         return maxCount;
+    }
+    
+    public void setBuiltFrequency(){
+        builtFrequency = true;
+    }
+    
+    public boolean getBuiltFrequency(){
+        return builtFrequency;
     }
 
     @Override
