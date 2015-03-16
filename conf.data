@@ -1,7 +1,9 @@
 debug = false
+serialize = true
 dirResources = ./resources/
 stopWordFilename = englishST.txt
 stringDirColEn = ./coleccionEn/
 stringDirColEnN = ./coleccionEnNormalized/
 stringDirColEnStop = ./coleccionEnStopped/
 stringDirColEnStem = ./coleccionEnStemmed/
+stringDirColEnSer = ./coleccionEnSerialized/

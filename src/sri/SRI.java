@@ -2,8 +2,12 @@ package sri;
 
 import java.io.BufferedReader;
 import java.io.File;
+import java.io.FileInputStream;
+import java.io.FileOutputStream;
 import java.io.FileReader;
 import java.io.FileWriter;
+import java.io.ObjectInputStream;
+import java.io.ObjectOutputStream;
 import java.util.ArrayList;
 import java.util.HashSet;
 import java.util.LinkedList;
@@ -23,12 +27,14 @@ public class SRI {
     public static void main(String[] args) {
 
         String debug = "false";
+        String serialize = "false";
         String dirResources = null;
         String stopWordFilename = null;
         String stringDirColEn = null;
         String stringDirColEnN = null;
         String stringDirColEnStop = null;
         String stringDirColEnStem = null;
+        String stringDirColEnSer = null;
 
         // Lectura de configuración
         File confData = new File("./conf.data");
@@ -69,6 +75,9 @@ public class SRI {
                         case "debug":
                             debug = valor;
                             break;
+                        case "serialize":
+                            serialize = valor;
+                            break;
                         case "dirResources":
                             dirResources = valor;
                             break;
@@ -86,6 +95,9 @@ public class SRI {
                             break;
                         case "stringDirColEnStem":
                             stringDirColEnStem = valor;
+                            break;
+                        case "stringDirColEnSer":
+                            stringDirColEnSer = valor;
                             break;
                     }
 
@@ -139,76 +151,105 @@ public class SRI {
         // Filtrado HTML
         for (File arrayHTMLfile1 : arrayHTMLfile) {
 
-            ArrayList<String> tokenList;
-
+            ArrayList<String> tokenList = null;
             String file = arrayHTMLfile1.getName();
             Integer idFile = dataManager.searchFile(file);
-            String textFiltered = HTMLfilter.filterEN(stringDirColEn, file);
-            if (textFiltered == null) {
-                if (debug.contentEquals("true")) {
-                    System.out.println("File " + file + " was ignored and won't be included in the SE.");
+            boolean skip = false;
+
+            File serializedFile = new File(stringDirColEnSer + file.replace(".html", ".ser"));
+            if (serializedFile.canRead() && "true".equals(serialize)) {
+                try {
+                    FileInputStream fis = new FileInputStream(serializedFile);
+                    try (ObjectInputStream ois = new ObjectInputStream(fis)) {
+                        tokenList = (ArrayList<String>) ois.readObject();
+                        skip = true;
+                    }
+                } catch (Exception e) {
+                    System.out.println("Failed loading serialized stemmed file " + file);
                 }
-                continue;
             }
 
-            tokenList = HTMLfilter.normalize(textFiltered);
+            if (!skip) {
 
-            File dirNorm = new File(stringDirColEnN);
-            dirNorm.mkdir();
-            try (FileWriter wr = new FileWriter(stringDirColEnN + file.replace(".html", ".txt"))) {
-                for (String j : tokenList) {
-                    wr.write(j + "\n");
+                String textFiltered = HTMLfilter.filterEN(stringDirColEn, file);
+                if (textFiltered == null) {
+                    if (debug.contentEquals("true")) {
+                        System.out.println("File " + file + " was ignored and won't be included in the SE.");
+                    }
+                    continue;
                 }
-            } catch (Exception e) {
-                System.out.println("Failed saving normalised file " + file);
-            }
 
-            numWords += tokenList.size();
-            if (tokenList.size() > maxNumWords) {
-                maxNumWords = tokenList.size();
-            }
-            if (tokenList.size() < minNumWords) {
-                minNumWords = tokenList.size();
-            }
+                tokenList = HTMLfilter.normalize(textFiltered);
+
+                File dirNorm = new File(stringDirColEnN);
+                dirNorm.mkdir();
+                try (FileWriter wr = new FileWriter(stringDirColEnN + file.replace(".html", ".txt"))) {
+                    for (String j : tokenList) {
+                        wr.write(j + "\n");
+                    }
+                } catch (Exception e) {
+                    System.out.println("Failed saving normalised file " + file);
+                }
+
+                numWords += tokenList.size();
+                if (tokenList.size() > maxNumWords) {
+                    maxNumWords = tokenList.size();
+                }
+                if (tokenList.size() < minNumWords) {
+                    minNumWords = tokenList.size();
+                }
             // Fin Filtrado HTML
 
-            // Módulo Stopper
-            tokenList = HTMLfilter.stopper(tokenList, stopWordSet, dirResources, stopWordFilename);
-            if (tokenList == null) {
-                continue;
-            }
-
-            File dirStop = new File(stringDirColEnStop);
-            dirStop.mkdir();
-            try (FileWriter wr = new FileWriter(stringDirColEnStop + file.replace(".html", ".txt"))) {
-                for (String j : tokenList) {
-                    wr.write(j + "\n");
+                // Módulo Stopper
+                tokenList = HTMLfilter.stopper(tokenList, stopWordSet, dirResources, stopWordFilename);
+                if (tokenList == null) {
+                    continue;
                 }
-            } catch (Exception e) {
-                System.out.println("Failed saving cleaned file " + file);
-            }
 
-            numWords2 += tokenList.size();
-            if (tokenList.size() > maxNumWords2) {
-                maxNumWords2 = tokenList.size();
-            }
-            if (tokenList.size() < minNumWords2) {
-                minNumWords2 = tokenList.size();
-            }
+                File dirStop = new File(stringDirColEnStop);
+                dirStop.mkdir();
+                try (FileWriter wr = new FileWriter(stringDirColEnStop + file.replace(".html", ".txt"))) {
+                    for (String j : tokenList) {
+                        wr.write(j + "\n");
+                    }
+                } catch (Exception e) {
+                    System.out.println("Failed saving cleaned file " + file);
+                }
+
+                numWords2 += tokenList.size();
+                if (tokenList.size() > maxNumWords2) {
+                    maxNumWords2 = tokenList.size();
+                }
+                if (tokenList.size() < minNumWords2) {
+                    minNumWords2 = tokenList.size();
+                }
             // Fin Módulo Stopper
 
-            // Módulo Stemmer
+                // Módulo Stemmer
             /*
-            * Idea: Serializar los resultados del módulo Stemmer. Todos los 
-            * ficheros una vez procesados, se serializan en un mismo fichero.
-            * Además se guarda un valor hash de cada fichero y se compara
-            * con el actual para comprobar que se trata del mismo fichero.
-            * Este código hash se puede guardar en la clase IndexedFile.
-            * El stream serializado se debe de guardar en una clase aparte.
-            */
-            tokenList = HTMLfilter.stemmer(tokenList);
-            if (tokenList == null) {
-                continue;
+                 * Idea: Serializar los resultados del módulo Stemmer. Todos los 
+                 * ficheros una vez procesados, se serializan en un mismo fichero.
+                 * Además se guarda un valor hash de cada fichero y se compara
+                 * con el actual para comprobar que se trata del mismo fichero.
+                 * Este código hash se puede guardar en la clase IndexedFile.
+                 * El stream serializado se debe de guardar en una clase aparte.
+                 */
+                tokenList = HTMLfilter.stemmer(tokenList);
+                if (tokenList == null) {
+                    continue;
+                }
+
+                File dirSer = new File(stringDirColEnSer);
+                dirSer.mkdir();
+                try {
+                    FileOutputStream fos = new FileOutputStream(stringDirColEnSer + file.replace(".html", ".ser"));
+                    try (ObjectOutputStream oos = new ObjectOutputStream(fos)) {
+                        oos.writeObject(tokenList);
+                    }
+                } catch (Exception e) {
+                    System.out.println("Failed serializing stemmed file " + file);
+                }
+
             }
 
             File dirStem = new File(stringDirColEnStem);
@@ -242,25 +283,27 @@ public class SRI {
                 "Operation was completed in " + (end - start) + " milliseconds.");
         System.out.println();
 
-        System.out.println(
-                "Number of words after filtering: " + numWords);
-        System.out.println(
-                "Average words after filtering: " + numWords / arrayHTMLfile.length);
-        System.out.println(
-                "Min number of words after filtering in documents: " + minNumWords);
-        System.out.println(
-                "Max Number of words after filtering in documents: " + maxNumWords);
-        System.out.println();
+        if ("false".equals(serialize)) { // Si estamos usando ficheros serializados, no podemos generar estas estadísticas.
+            System.out.println(
+                    "Number of words after filtering: " + numWords);
+            System.out.println(
+                    "Average words after filtering: " + numWords / arrayHTMLfile.length);
+            System.out.println(
+                    "Min number of words after filtering in documents: " + minNumWords);
+            System.out.println(
+                    "Max Number of words after filtering in documents: " + maxNumWords);
+            System.out.println();
 
-        System.out.println(
-                "Number of words after cleaning: " + numWords2);
-        System.out.println(
-                "Average words after cleaning: " + numWords2 / arrayHTMLfile.length);
-        System.out.println(
-                "Min number of words after cleaning in documents: " + minNumWords2);
-        System.out.println(
-                "Max Number of words after cleaning in documents: " + maxNumWords2);
-        System.out.println();
+            System.out.println(
+                    "Number of words after cleaning: " + numWords2);
+            System.out.println(
+                    "Average words after cleaning: " + numWords2 / arrayHTMLfile.length);
+            System.out.println(
+                    "Min number of words after cleaning in documents: " + minNumWords2);
+            System.out.println(
+                    "Max Number of words after cleaning in documents: " + maxNumWords2);
+            System.out.println();
+        }
 
         System.out.println(
                 "Number of unique words after stemming: " + dataManager.wordQuantity());
