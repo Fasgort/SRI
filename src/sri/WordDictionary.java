@@ -11,7 +11,7 @@ import java.util.Map;
 public class WordDictionary {
 
     static private WordDictionary instance = null;
-    final private ArrayList<String> wordIDs; // File Dictionary ID -> word
+    final private ArrayList<IndexedWord> wordIDs; // File Dictionary ID -> word
     final private Map<String, Integer> words; // File Dictionary word -> ID
 
     protected WordDictionary() {
@@ -30,7 +30,7 @@ public class WordDictionary {
         return words.get(word);
     }
 
-    public String search(Integer idWord) {
+    public IndexedWord search(Integer idWord) {
         if (idWord < wordIDs.size()) {
             return wordIDs.get(idWord);
         } else {
@@ -42,7 +42,7 @@ public class WordDictionary {
         IndexedWord newWord = new IndexedWord(word);
         Integer idWord = newWord.getID();
         words.put(word, idWord);
-        wordIDs.add(idWord, word);
+        wordIDs.add(idWord, newWord);
         return idWord;
     }
 

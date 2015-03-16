@@ -11,7 +11,7 @@ import java.util.Map;
 public class FileDictionary {
 
     static private FileDictionary instance = null;
-    final private ArrayList<String> fileIDs; // File Dictionary ID -> file
+    final private ArrayList<IndexedFile> fileIDs; // File Dictionary ID -> file
     final private Map<String, Integer> files; // File Dictionary file -> ID
 
     protected FileDictionary() {
@@ -30,7 +30,7 @@ public class FileDictionary {
         return files.get(file);
     }
 
-    public String search(Integer idFile) {
+    public IndexedFile search(Integer idFile) {
         if (idFile < fileIDs.size()) {
             return fileIDs.get(idFile);
         } else {
@@ -42,7 +42,7 @@ public class FileDictionary {
         IndexedFile newFile = new IndexedFile(file);
         Integer idFile = newFile.getID();
         files.put(file, idFile);
-        fileIDs.add(idFile, file);
+        fileIDs.add(idFile, newFile);
         return idFile;
     }
 

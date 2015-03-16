@@ -37,7 +37,7 @@ public class DataManager {
         return idWord;
     }
 
-    public String searchWord(Integer idWord) {
+    public IndexedWord searchWord(Integer idWord) {
         return wordDictionary.search(idWord);
     }
 
@@ -49,7 +49,7 @@ public class DataManager {
         return idFile;
     }
 
-    public String searchFile(Integer idFile) {
+    public IndexedFile searchFile(Integer idFile) {
         return fileDictionary.search(idFile);
     }
 

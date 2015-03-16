@@ -10,7 +10,7 @@ import java.util.Map;
 public class WordData implements Comparable<WordData> {
 
     final private Integer idWord;
-    private Integer count;
+    private int count;
     final private Map<Integer, FileFrequency> fileFrequency;
 
     public WordData(Integer id) {
@@ -36,7 +36,7 @@ public class WordData implements Comparable<WordData> {
         count++;
     }
 
-    public Integer getCount() {
+    public int getCount() {
         return count;
     }
 
