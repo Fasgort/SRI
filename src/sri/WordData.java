@@ -37,7 +37,7 @@ public class WordData implements Comparable<WordData> {
         word.generateIDF(numberDocuments);
     }
 
-    public void generateWeight() {
+    public void generateWeight() { // Incorrecto el cálculo de la norma. Revisar.
         Collection<FileFrequency> collect = fileFrequency.values();
         Iterator<FileFrequency> it = collect.iterator();
 
