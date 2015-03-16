@@ -9,27 +9,31 @@ import java.util.Map;
  */
 public class WordData implements Comparable<WordData> {
 
-    final private Integer idWord;
+    final private IndexedWord word;
     private int count;
     final private Map<Integer, FileFrequency> fileFrequency;
 
-    public WordData(Integer id) {
-        idWord = id;
+    public WordData(IndexedWord _word) {
+        word = _word;
         count = 0;
         fileFrequency = new HashMap(10000);
     }
 
-    public FileFrequency search(Integer idFile) {
-        return fileFrequency.get(idFile);
+    public FileFrequency search(IndexedFile file) {
+        return fileFrequency.get(file.getID());
     }
 
-    public void add(Integer idFile) {
-        fileFrequency.put(idFile, new FileFrequency(idFile));
+    public void add(IndexedFile file) {
+        fileFrequency.put(file.getID(), new FileFrequency(file));
         count++;
     }
 
-    public Integer getID() {
-        return idWord;
+    public String getWord() {
+        return word.getWord();
+    }
+    
+    public Integer getID(){
+        return word.getID();
     }
 
     public void addCount() {

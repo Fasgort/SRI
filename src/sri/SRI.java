@@ -259,19 +259,19 @@ public class SRI {
                 "Top 5 frequent words after stemming: ");
 
         wd = top5FrequentWords.removeFirst();
-        System.out.println("   " + dataManager.searchWord(wd.getID()).getWord() + " with " + wd.getCount() + " apparitions in documents.");
+        System.out.println("   " + wd.getWord() + " with " + wd.getCount() + " apparitions in documents.");
 
         wd = top5FrequentWords.removeFirst();
-        System.out.println("   " + dataManager.searchWord(wd.getID()).getWord() + " with " + wd.getCount() + " apparitions in documents.");
+        System.out.println("   " + wd.getWord() + " with " + wd.getCount() + " apparitions in documents.");
 
         wd = top5FrequentWords.removeFirst();
-        System.out.println("   " + dataManager.searchWord(wd.getID()).getWord() + " with " + wd.getCount() + " apparitions in documents.");
+        System.out.println("   " + wd.getWord() + " with " + wd.getCount() + " apparitions in documents.");
 
         wd = top5FrequentWords.removeFirst();
-        System.out.println("   " + dataManager.searchWord(wd.getID()).getWord() + " with " + wd.getCount() + " apparitions in documents.");
+        System.out.println("   " + wd.getWord() + " with " + wd.getCount() + " apparitions in documents.");
 
         wd = top5FrequentWords.removeFirst();
-        System.out.println("   " + dataManager.searchWord(wd.getID()).getWord() + " with " + wd.getCount() + " apparitions in documents.");
+        System.out.println("   " + wd.getWord() + " with " + wd.getCount() + " apparitions in documents.");
         System.out.println();
         // Fin Estadísticas
 

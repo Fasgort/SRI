@@ -9,10 +9,12 @@ public class IndexedFile implements Comparable<IndexedFile> {
     static private Integer idNext = 0;
     final private String file;
     final private Integer idFile;
+    private int maxCount;
 
     public IndexedFile(String _file) {
         file = _file;
         idFile = idNext++;
+        maxCount = 1;
     }
 
     public String getFile() {
@@ -21,6 +23,14 @@ public class IndexedFile implements Comparable<IndexedFile> {
 
     public Integer getID() {
         return idFile;
+    }
+    
+    public void updateMaxCount(int count){
+        if (count > maxCount) maxCount = count;
+    }
+    
+    public int getMaxCount(){
+        return maxCount;
     }
 
     @Override

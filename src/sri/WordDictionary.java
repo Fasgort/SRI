@@ -38,10 +38,9 @@ public class WordDictionary {
         }
     }
 
-    public Integer add(String word) {
-        IndexedWord newWord = new IndexedWord(word);
+    public Integer add(IndexedWord newWord) {
         Integer idWord = newWord.getID();
-        words.put(word, idWord);
+        words.put(newWord.getWord(), idWord);
         wordIDs.add(idWord, newWord);
         return idWord;
     }

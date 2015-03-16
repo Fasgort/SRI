@@ -6,11 +6,11 @@ package sri;
  */
 public class WordFrequency implements Comparable<WordFrequency> {
 
-    final private Integer idWord;
+    final private IndexedWord word;
     private int count;
 
-    public WordFrequency(Integer _idWord) {
-        idWord = _idWord;
+    public WordFrequency(IndexedWord _word) {
+        word = _word;
         count = 1;
     }
 
@@ -18,8 +18,12 @@ public class WordFrequency implements Comparable<WordFrequency> {
         count++;
     }
 
+    public IndexedWord getWord() {
+        return word;
+    }
+
     public Integer getID() {
-        return idWord;
+        return word.getID();
     }
 
     public int getCount() {

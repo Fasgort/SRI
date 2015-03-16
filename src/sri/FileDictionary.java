@@ -38,10 +38,9 @@ public class FileDictionary {
         }
     }
 
-    public Integer add(String file) {
-        IndexedFile newFile = new IndexedFile(file);
+    public Integer add(IndexedFile newFile) {
         Integer idFile = newFile.getID();
-        files.put(file, idFile);
+        files.put(newFile.getFile(), idFile);
         fileIDs.add(idFile, newFile);
         return idFile;
     }

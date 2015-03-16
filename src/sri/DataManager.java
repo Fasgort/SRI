@@ -31,8 +31,9 @@ public class DataManager {
     public Integer searchWord(String word) {
         Integer idWord = wordDictionary.search(word);
         if (idWord == null) {
-            idWord = wordDictionary.add(word);
-            wordFrequency.add(idWord, new WordData(idWord));
+            IndexedWord iW = new IndexedWord(word);
+            idWord = wordDictionary.add(iW);
+            wordFrequency.add(idWord, new WordData(iW));
         }
         return idWord;
     }
@@ -44,7 +45,7 @@ public class DataManager {
     public Integer searchFile(String file) {
         Integer idFile = fileDictionary.search(file);
         if (idFile == null) {
-            return fileDictionary.add(file);
+            return fileDictionary.add(new IndexedFile(file));
         }
         return idFile;
     }
@@ -55,9 +56,10 @@ public class DataManager {
 
     public void addFrequency(Integer idWord, Integer idFile) {
         WordData wd = wordFrequency.get(idWord);
-        FileFrequency ff = wd.search(idFile);
+        IndexedFile iF = fileDictionary.search(idFile);
+        FileFrequency ff = wd.search(iF);
         if (ff == null) {
-            wd.add(idFile);
+            wd.add(iF);
         } else {
             ff.addCount();
             wd.addCount();
