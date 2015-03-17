@@ -1,5 +1,9 @@
 package sri;
 
+import cern.colt.matrix.tdouble.impl.SparseDoubleMatrix2D;
+import static java.lang.StrictMath.log;
+import static java.lang.StrictMath.pow;
+import static java.lang.StrictMath.sqrt;
 import java.util.ArrayList;
 import java.util.Iterator;
 import java.util.LinkedList;
@@ -13,17 +17,26 @@ public class DataManager {
     private static DataManager instance = null;
     final private FileDictionary fileDictionary;
     final private WordDictionary wordDictionary;
-    ArrayList<WordData> wordFrequency;
+    ArrayList<WordData> wordData;
+    ArrayList<FileData> fileData;
+    private SparseDoubleMatrix2D index;
 
     protected DataManager(String stringDirDictionary) {
         fileDictionary = FileDictionary.getInstance(stringDirDictionary);
         wordDictionary = WordDictionary.getInstance(stringDirDictionary);
-        wordFrequency = new ArrayList(10000);
+        wordData = new ArrayList(5000);
+        fileData = new ArrayList(300);
 
         ArrayList<IndexedWord> wordDic = wordDictionary.accessDictionary();
         for (int i = 0; i < wordDic.size(); i++) {
             IndexedWord iW = wordDic.get(i);
-            wordFrequency.add(i, new WordData(iW));
+            wordData.add(i, new WordData(iW));
+        }
+        
+        ArrayList<IndexedFile> fileDic = fileDictionary.accessDictionary();
+        for (int i = 0; i < fileDic.size(); i++) {
+            IndexedFile iF = fileDic.get(i);
+            fileData.add(i, new FileData(iF));
         }
 
     }
@@ -40,7 +53,7 @@ public class DataManager {
         if (idWord == null) {
             IndexedWord iW = new IndexedWord(word);
             idWord = wordDictionary.add(iW);
-            wordFrequency.add(idWord, new WordData(iW));
+            wordData.add(idWord, new WordData(iW));
         }
         return idWord;
     }
@@ -52,7 +65,9 @@ public class DataManager {
     public Integer searchFile(String file) {
         Integer idFile = fileDictionary.search(file);
         if (idFile == null) {
-            return fileDictionary.add(new IndexedFile(file));
+            IndexedFile iF = new IndexedFile(file);
+            idFile = fileDictionary.add(iF);
+            fileData.add(idFile, new FileData(iF));
         }
         return idFile;
     }
@@ -70,7 +85,7 @@ public class DataManager {
     }
 
     public void addFrequency(Integer idWord, Integer idFile) {
-        WordData wd = wordFrequency.get(idWord);
+        WordData wd = wordData.get(idWord);
         IndexedFile iF = fileDictionary.search(idFile);
         FileFrequency ff = wd.search(iF);
         if (ff == null) {
@@ -79,15 +94,60 @@ public class DataManager {
             ff.addCount();
             wd.addCount();
         }
+
+        FileData fd = fileData.get(idFile);
+        IndexedWord iW = wordDictionary.search(idWord);
+        WordFrequency wf = fd.search(iW);
+        if (wf == null) {
+            fd.add(iW);
+        } else {
+            wf.addCount();
+            fd.addCount();
+        }
     }
 
     public void generateIndex() {
-        Iterator<WordData> itw = wordFrequency.iterator();
+        int numberWords = wordDictionary.size();
+        int numberDocuments = fileDictionary.size();
+        Iterator<IndexedWord> itw;
+        Iterator<IndexedFile> itf;
 
+        // Initialize index
+        index = new SparseDoubleMatrix2D(numberWords, numberDocuments);
+
+        // Generate IDF
+        itw = wordDictionary.iterator();
         while (itw.hasNext()) {
-            WordData wd = itw.next();
-            wd.generateIDF(fileDictionary.size());
-            wd.generateWeight();
+            IndexedWord iW = itw.next();
+            int documentsWithWord = wordData.get(iW.getID()).size();
+            iW.setIDF(log((double) numberDocuments / (double) documentsWithWord));
+        }
+
+        // Generate Weight
+        itw = wordDictionary.iterator();
+        while (itw.hasNext()) {
+            IndexedWord iW = itw.next();
+            itf = fileDictionary.iterator();
+            double normFile = 0;
+            while (itf.hasNext()) {
+                IndexedFile iF = itf.next();
+                FileFrequency ff = wordData.get(iW.getID()).search(iF);
+                double weight;
+                if (ff == null) {
+                    weight = 0.0;
+                } else {
+                    weight = (double) ff.getCount() * (double) iW.getIDF();
+                }
+                normFile += pow(weight, 2);
+                index.set(iW.getID(), iF.getID(), weight);
+            }
+            normFile = sqrt(normFile);
+            itf = fileDictionary.iterator();
+            while (itf.hasNext()) {
+                IndexedFile iF = itf.next();
+                double normWeight = index.get(iW.getID(), iF.getID()) / normFile;
+                index.set(iW.getID(), iF.getID(), normWeight);
+            }
         }
 
     }
@@ -99,7 +159,7 @@ public class DataManager {
 
     public LinkedList<WordData> topFrequentWords(int sizeList) {
         LinkedList<WordData> list = new LinkedList();
-        Iterator<WordData> wordIterator = wordFrequency.iterator();
+        Iterator<WordData> wordIterator = wordData.iterator();
 
         int minFrequency = 0;
         while (wordIterator.hasNext()) {
@@ -109,16 +169,16 @@ public class DataManager {
                     list.add(word1);
                 } else {
                     Iterator<WordData> listIterator = list.descendingIterator();
-                    int index = list.size();
+                    int i = list.size();
                     boolean added = false;
                     while (listIterator.hasNext()) {
                         WordData word2 = listIterator.next();
                         if (word1.getCount() <= word2.getCount()) {
-                            list.add(index, word1);
+                            list.add(i, word1);
                             added = true;
                             break;
                         } else {
-                            index--;
+                            i--;
                         }
                     }
                     if (!added) {
@@ -137,7 +197,11 @@ public class DataManager {
     }
 
     public Integer wordQuantity() {
-        return wordFrequency.size();
+        return wordData.size();
+    }
+
+    public Integer fileQuantity() {
+        return fileData.size();
     }
 
 }

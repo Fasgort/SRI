@@ -13,12 +13,12 @@ public class IndexedFile implements Comparable<IndexedFile>, Serializable {
     final private String file;
     final private Integer idFile;
     private long checksum = -1;
-    private transient int maxCount = 0;
-    private transient boolean builtFrequency = false;
+    private transient int maxFrequentWord;
 
     protected IndexedFile(String _file) {
         file = _file;
         idFile = idNext++;
+        maxFrequentWord = 0;
     }
 
     protected static void setNextID(Integer _idNext) {
@@ -41,22 +41,12 @@ public class IndexedFile implements Comparable<IndexedFile>, Serializable {
         return checksum;
     }
 
-    protected void updateMaxCount(int count) {
-        if (count > maxCount) {
-            maxCount = count;
-        }
+    protected void setMaxFrequentWord(int count) {
+        maxFrequentWord = count;
     }
 
-    protected int getMaxCount() {
-        return maxCount;
-    }
-
-    protected void setBuiltFrequency() {
-        builtFrequency = true;
-    }
-
-    protected boolean getBuiltFrequency() {
-        return builtFrequency;
+    protected int getMaxFrequentWord() {
+        return maxFrequentWord;
     }
 
     @Override

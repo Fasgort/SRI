@@ -66,6 +66,10 @@ public class FileDictionary {
         return instance;
     }
 
+    protected ArrayList<IndexedFile> accessDictionary() {
+        return fileIDs;
+    }
+
     protected Integer search(String file) {
         return files.get(file);
     }
@@ -85,18 +89,6 @@ public class FileDictionary {
         return idFile;
     }
 
-    protected void frequencyBuilt() {
-        Iterator<IndexedFile> it = fileIDs.iterator();
-
-        while (it.hasNext()) {
-            it.next().setBuiltFrequency();
-        }
-    }
-
-    protected int size() {
-        return fileIDs.size();
-    }
-
     protected void saveDictionary(String stringDirDictionary) {
         try {
             File dirDictionary = new File(stringDirDictionary);
@@ -108,6 +100,14 @@ public class FileDictionary {
         } catch (Exception e) {
             System.out.println("Failed serializing file dictionary.");
         }
+    }
+
+    protected int size() {
+        return fileIDs.size();
+    }
+
+    protected Iterator<IndexedFile> iterator() {
+        return fileIDs.iterator();
     }
 
 }

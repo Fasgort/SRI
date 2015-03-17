@@ -94,6 +94,10 @@ public class WordDictionary {
         return wordIDs.size();
     }
 
+    public Iterator<IndexedWord> iterator() {
+        return wordIDs.iterator();
+    }
+
     protected void saveDictionary(String stringDirDictionary) {
         try {
             File dirDictionary = new File(stringDirDictionary);
