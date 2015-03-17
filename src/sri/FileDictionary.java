@@ -16,8 +16,8 @@ public class FileDictionary {
     final private Map<String, Integer> files; // File Dictionary file -> ID
 
     protected FileDictionary() {
-        fileIDs = new ArrayList(200);
-        files = new HashMap(300);
+        fileIDs = new ArrayList(300);
+        files = new HashMap(500);
     }
 
     public static FileDictionary getInstance() {
@@ -46,16 +46,12 @@ public class FileDictionary {
         return idFile;
     }
 
-    public void frequencyBuilt() {
-        Iterator<IndexedFile> it = fileIDs.iterator();
-
-        while (it.hasNext()) {
-            it.next().setBuiltFrequency();
-        }
-    }
-    
-    public int size(){
+    public int size() {
         return fileIDs.size();
+    }
+
+    public Iterator<IndexedFile> iterator() {
+        return fileIDs.iterator();
     }
 
 }

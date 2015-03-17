@@ -9,14 +9,12 @@ public class IndexedFile implements Comparable<IndexedFile> {
     static private Integer idNext = 0;
     final private String file;
     final private Integer idFile;
-    private int maxCount;
-    private boolean builtFrequency;
+    private int maxFrequentWord;
 
     public IndexedFile(String _file) {
         file = _file;
         idFile = idNext++;
-        maxCount = 1;
-        builtFrequency = false;
+        maxFrequentWord = 0;
     }
 
     public String getFile() {
@@ -26,21 +24,13 @@ public class IndexedFile implements Comparable<IndexedFile> {
     public Integer getID() {
         return idFile;
     }
-    
-    public void updateMaxCount(int count){
-        if (count > maxCount) maxCount = count;
+
+    public void setMaxFrequentWord(int count) {
+            maxFrequentWord = count;
     }
-    
-    public int getMaxCount(){
-        return maxCount;
-    }
-    
-    public void setBuiltFrequency(){
-        builtFrequency = true;
-    }
-    
-    public boolean getBuiltFrequency(){
-        return builtFrequency;
+
+    public int getMaxFrequentWord() {
+        return maxFrequentWord;
     }
 
     @Override

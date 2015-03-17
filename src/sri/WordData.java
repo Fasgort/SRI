@@ -1,10 +1,6 @@
 package sri;
 
-import static java.lang.StrictMath.pow;
-import static java.lang.StrictMath.sqrt;
-import java.util.Collection;
 import java.util.HashMap;
-import java.util.Iterator;
 import java.util.Map;
 
 /**
@@ -20,7 +16,7 @@ public class WordData implements Comparable<WordData> {
     public WordData(IndexedWord _word) {
         word = _word;
         count = 0;
-        fileFrequency = new HashMap(10000);
+        fileFrequency = new HashMap(7500);
     }
 
     public FileFrequency search(IndexedFile file) {
@@ -29,35 +25,7 @@ public class WordData implements Comparable<WordData> {
 
     public void add(IndexedFile file) {
         fileFrequency.put(file.getID(), new FileFrequency(file));
-        word.addDocument();
         count++;
-    }
-
-    public void generateIDF(int numberDocuments) {
-        word.generateIDF(numberDocuments);
-    }
-
-    public void generateWeight() { // Incorrecto el cálculo de la norma. Revisar.
-        Collection<FileFrequency> collect = fileFrequency.values();
-        Iterator<FileFrequency> it = collect.iterator();
-
-        double idf = word.getIDF();
-        double weightSum = 0;
-        FileFrequency ff;
-
-        while (it.hasNext()) {
-            ff = it.next();
-            ff.generateFrequency();
-            ff.generateWeight(idf);
-            weightSum += pow(ff.getWeight(), 2);
-        }
-
-        weightSum = sqrt(weightSum);
-
-        it = collect.iterator();
-        while (it.hasNext()) {
-            it.next().generateNormalizedWeight(weightSum);
-        }
     }
 
     public String getWord() {
@@ -74,6 +42,10 @@ public class WordData implements Comparable<WordData> {
 
     public int getCount() {
         return count;
+    }
+
+    public int size() {
+        return fileFrequency.size();
     }
 
     @Override

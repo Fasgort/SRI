@@ -2,6 +2,7 @@ package sri;
 
 import java.util.ArrayList;
 import java.util.HashMap;
+import java.util.Iterator;
 import java.util.Map;
 
 /**
@@ -15,8 +16,8 @@ public class WordDictionary {
     final private Map<String, Integer> words; // File Dictionary word -> ID
 
     protected WordDictionary() {
-        wordIDs = new ArrayList(200);
-        words = new HashMap(300);
+        wordIDs = new ArrayList(300);
+        words = new HashMap(500);
     }
 
     public static WordDictionary getInstance() {
@@ -47,6 +48,10 @@ public class WordDictionary {
     
     public int size(){
         return wordIDs.size();
+    }
+    
+    public Iterator<IndexedWord> iterator(){
+        return wordIDs.iterator();
     }
 
 }
