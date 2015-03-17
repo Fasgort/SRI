@@ -9,25 +9,25 @@ import java.util.LinkedList;
  * @author Fasgort
  */
 public class DataManager {
-
+    
     static private DataManager instance = null;
     final private FileDictionary fileDictionary;
     final private WordDictionary wordDictionary;
     ArrayList<WordData> wordFrequency;
-
+    
     protected DataManager() {
         fileDictionary = FileDictionary.getInstance();
         wordDictionary = WordDictionary.getInstance();
         wordFrequency = new ArrayList(10000);
     }
-
+    
     public static DataManager getInstance() {
         if (instance == null) {
             instance = new DataManager();
         }
         return instance;
     }
-
+    
     public Integer searchWord(String word) {
         Integer idWord = wordDictionary.search(word);
         if (idWord == null) {
@@ -37,11 +37,11 @@ public class DataManager {
         }
         return idWord;
     }
-
+    
     public IndexedWord searchWord(Integer idWord) {
         return wordDictionary.search(idWord);
     }
-
+    
     public Integer searchFile(String file) {
         Integer idFile = fileDictionary.search(file);
         if (idFile == null) {
@@ -49,11 +49,19 @@ public class DataManager {
         }
         return idFile;
     }
-
+    
     public IndexedFile searchFile(Integer idFile) {
         return fileDictionary.search(idFile);
     }
-
+    
+    public boolean checksumFile(Integer idFile, long checksum) {
+        return fileDictionary.search(idFile).getChecksum() == checksum;
+    }
+    
+    public void updateChecksumFile(Integer idFile, long checksum) {
+        fileDictionary.search(idFile).setChecksum(checksum);
+    }
+    
     public void addFrequency(Integer idWord, Integer idFile) {
         WordData wd = wordFrequency.get(idWord);
         IndexedFile iF = fileDictionary.search(idFile);
@@ -65,10 +73,10 @@ public class DataManager {
             wd.addCount();
         }
     }
-
+    
     public void generateIndex() {
         Iterator<WordData> itw = wordFrequency.iterator();
-
+        
         while (itw.hasNext()) {
             WordData wd = itw.next();
             wd.generateIDF(fileDictionary.size());
@@ -76,11 +84,11 @@ public class DataManager {
         }
         
     }
-
+    
     public LinkedList<WordData> topFrequentWords(int sizeList) {
         LinkedList<WordData> list = new LinkedList();
         Iterator<WordData> wordIterator = wordFrequency.iterator();
-
+        
         int minFrequency = 0;
         while (wordIterator.hasNext()) {
             WordData word1 = wordIterator.next();
@@ -111,13 +119,13 @@ public class DataManager {
                 }
             }
         }
-
+        
         return list;
-
+        
     }
-
+    
     public Integer wordQuantity() {
         return wordFrequency.size();
     }
-
+    
 }

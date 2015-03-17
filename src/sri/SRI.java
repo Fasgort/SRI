@@ -158,10 +158,11 @@ public class SRI {
             String file = arrayHTMLfile1.getName();
             Integer idFile = dataManager.searchFile(file);
             boolean skip = false;
+            Checksum checksum;
+            boolean modified = false;
 
-            // Comprobar checksum
+            // Generar checksum
             try (InputStream fis = new FileInputStream(stringDirColEn + file)) {
-                Checksum checksum;
                 byte[] buffer = new byte[1024];
                 checksum = new Adler32();
                 int numRead;
@@ -171,14 +172,19 @@ public class SRI {
                         checksum.update(buffer, 0, numRead);
                     }
                 } while (numRead != -1);
-                System.out.println("File: " + file + " has checksum " + checksum.getValue());
+
+                // Comprobar diferencias en el archivo
+                if (!dataManager.checksumFile(idFile, checksum.getValue())) {
+                    //modified = true; // Descomentar una vez que se implemente la carga de diccionarios.
+                    dataManager.updateChecksumFile(idFile, checksum.getValue());
+                }
+
             } catch (Exception e) {
                 System.out.println("Checksum failed.");
             }
 
-            // Fin comprobado
             File serializedFile = new File(stringDirColEnSer + file.replace(".html", ".ser"));
-            if (serializedFile.canRead() && "true".equals(serialize)) {
+            if (serializedFile.canRead() && "true".equals(serialize) && !modified) {
                 try {
                     FileInputStream fis = new FileInputStream(serializedFile);
                     try (ObjectInputStream ois = new ObjectInputStream(fis)) {
@@ -219,7 +225,7 @@ public class SRI {
                 if (tokenList.size() < minNumWords) {
                     minNumWords = tokenList.size();
                 }
-            // Fin Filtrado HTML
+                // Fin Filtrado HTML
 
                 // Módulo Stopper
                 tokenList = HTMLfilter.stopper(tokenList, stopWordSet, dirResources, stopWordFilename);
@@ -244,10 +250,10 @@ public class SRI {
                 if (tokenList.size() < minNumWords2) {
                     minNumWords2 = tokenList.size();
                 }
-            // Fin Módulo Stopper
+                // Fin Módulo Stopper
 
                 // Módulo Stemmer
-            /*
+                /*
                  * Idea: Serializar los resultados del módulo Stemmer. Todos los 
                  * ficheros una vez procesados, se serializan en un mismo fichero.
                  * Además se guarda un valor hash de cada fichero y se compara
