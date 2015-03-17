@@ -38,6 +38,7 @@ public class SRI {
         String stringDirColEnStop = null;
         String stringDirColEnStem = null;
         String stringDirColEnSer = null;
+        String stringDirDictionary = null;
 
         // Lectura de configuración
         File confData = new File("./conf.data");
@@ -102,6 +103,9 @@ public class SRI {
                         case "stringDirColEnSer":
                             stringDirColEnSer = valor;
                             break;
+                        case "stringDirDictionary":
+                            stringDirDictionary = valor;
+                            break;
                     }
 
                 }
@@ -132,7 +136,7 @@ public class SRI {
         int maxNumWords2 = Integer.MIN_VALUE;
 
         // DATA STRUCTURES
-        DataManager dataManager = DataManager.getInstance();
+        DataManager dataManager = DataManager.getInstance(stringDirDictionary);
         Set<String> stopWordSet = new HashSet(800); // Stop Word Dictionary
 
         // Lectura de directorio
@@ -175,7 +179,10 @@ public class SRI {
 
                 // Comprobar diferencias en el archivo
                 if (!dataManager.checksumFile(idFile, checksum.getValue())) {
-                    //modified = true; // Descomentar una vez que se implemente la carga de diccionarios.
+                    modified = true;
+                    if ("true".equals(debug)) {
+                        System.out.println("File " + file + " was modified.");
+                    }
                     dataManager.updateChecksumFile(idFile, checksum.getValue());
                 }
 
@@ -200,7 +207,7 @@ public class SRI {
 
                 String textFiltered = HTMLfilter.filterEN(stringDirColEn, file);
                 if (textFiltered == null) {
-                    if (debug.contentEquals("true")) {
+                    if ("true".equals(debug)) {
                         System.out.println("File " + file + " was ignored and won't be included in the SE.");
                     }
                     continue;
@@ -266,15 +273,17 @@ public class SRI {
                     continue;
                 }
 
-                File dirSer = new File(stringDirColEnSer);
-                dirSer.mkdir();
-                try {
-                    FileOutputStream fos = new FileOutputStream(stringDirColEnSer + file.replace(".html", ".ser"));
-                    try (ObjectOutputStream oos = new ObjectOutputStream(fos)) {
-                        oos.writeObject(tokenList);
+                if ("true".equals(serialize)) {
+                    File dirSer = new File(stringDirColEnSer);
+                    dirSer.mkdir();
+                    try {
+                        FileOutputStream fos = new FileOutputStream(stringDirColEnSer + file.replace(".html", ".ser"));
+                        try (ObjectOutputStream oos = new ObjectOutputStream(fos)) {
+                            oos.writeObject(tokenList);
+                        }
+                    } catch (Exception e) {
+                        System.out.println("Failed serializing stemmed file " + file);
                     }
-                } catch (Exception e) {
-                    System.out.println("Failed serializing stemmed file " + file);
                 }
 
             }
@@ -297,8 +306,13 @@ public class SRI {
         // Generación del índice, con su tabla de pesos normalizada
         dataManager.generateIndex();
 
+        // Serializa y guarda los diccionarios
+        if ("true".equals(serialize)) {
+            dataManager.saveDictionary(stringDirDictionary);
+        }
+
         // Generación de listas de palabras frecuentes
-        LinkedList<WordData> top5FrequentWords = dataManager.topFrequentWords(5);
+        LinkedList<WordData> topFrequentWords = dataManager.topFrequentWords(5);
 
         // Fin de operaciónes
         long end = System.currentTimeMillis();
@@ -339,30 +353,11 @@ public class SRI {
         System.out.println(
                 "Top 5 frequent words after stemming: ");
 
-        wd = top5FrequentWords.removeFirst();
-
-        System.out.println(
-                "   " + wd.getWord() + " with " + wd.getCount() + " apparitions in documents.");
-
-        wd = top5FrequentWords.removeFirst();
-
-        System.out.println(
-                "   " + wd.getWord() + " with " + wd.getCount() + " apparitions in documents.");
-
-        wd = top5FrequentWords.removeFirst();
-
-        System.out.println(
-                "   " + wd.getWord() + " with " + wd.getCount() + " apparitions in documents.");
-
-        wd = top5FrequentWords.removeFirst();
-
-        System.out.println(
-                "   " + wd.getWord() + " with " + wd.getCount() + " apparitions in documents.");
-
-        wd = top5FrequentWords.removeFirst();
-
-        System.out.println(
-                "   " + wd.getWord() + " with " + wd.getCount() + " apparitions in documents.");
+        int topSize = topFrequentWords.size();
+        for (int i = 0; i < topSize; i++) {
+            wd = topFrequentWords.removeFirst();
+            System.out.println("   " + wd.getWord() + " with " + wd.getCount() + " apparitions in documents.");
+        }
         System.out.println();
         // Fin Estadísticas
 

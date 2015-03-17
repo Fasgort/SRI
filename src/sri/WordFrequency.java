@@ -9,24 +9,24 @@ public class WordFrequency implements Comparable<WordFrequency> {
     final private IndexedWord word;
     private int count;
 
-    public WordFrequency(IndexedWord _word) {
+    protected WordFrequency(IndexedWord _word) {
         word = _word;
         count = 1;
     }
 
-    public void addCount() {
+    protected void addCount() {
         count++;
     }
 
-    public IndexedWord getWord() {
+    protected IndexedWord getWord() {
         return word;
     }
 
-    public Integer getID() {
+    protected Integer getID() {
         return word.getID();
     }
 
-    public int getCount() {
+    protected int getCount() {
         return count;
     }
 

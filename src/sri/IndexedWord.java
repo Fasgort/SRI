@@ -16,34 +16,38 @@ public class IndexedWord implements Comparable<IndexedWord>, Serializable {
     private transient int documentCount;
     private transient double idf;
 
-    public IndexedWord(String _word) {
+    protected IndexedWord(String _word) {
         word = _word;
         idWord = idNext++;
         documentCount = 0;
         idf = 0;
     }
 
-    public String getWord() {
+    protected static void setNextID(Integer _idNext) {
+        idNext = _idNext;
+    }
+
+    protected String getWord() {
         return word;
     }
 
-    public Integer getID() {
+    protected Integer getID() {
         return idWord;
     }
 
-    public void addDocument() {
+    protected void addDocument() {
         documentCount++;
     }
 
-    public int getDocumentCount() {
+    protected int getDocumentCount() {
         return documentCount;
     }
 
-    public void generateIDF(int numberDocuments) {
+    protected void generateIDF(int numberDocuments) {
         idf = log((double) numberDocuments / (double) documentCount);
     }
 
-    public double getIDF() {
+    protected double getIDF() {
         return idf;
     }
 

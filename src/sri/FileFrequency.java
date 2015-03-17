@@ -11,47 +11,47 @@ public class FileFrequency implements Comparable<FileFrequency> {
     private double frequency;
     private double weight;
 
-    public FileFrequency(IndexedFile _file) {
+    protected FileFrequency(IndexedFile _file) {
         file = _file;
         count = 1;
         frequency = 0;
     }
 
-    public void addCount() {
+    protected void addCount() {
         file.updateMaxCount(++count);
     }
 
-    public IndexedFile getFile() {
+    protected IndexedFile getFile() {
         return file;
     }
 
-    public Integer getID() {
+    protected Integer getID() {
         return file.getID();
     }
 
-    public int getCount() {
+    protected int getCount() {
         return count;
     }
 
-    public void generateFrequency() {
+    protected void generateFrequency() {
         if (!file.getBuiltFrequency()) {
             frequency = (double) count / (double) file.getMaxCount();
         }
     }
 
-    public double getFrequency() {
+    protected double getFrequency() {
         return frequency;
     }
 
-    public void generateWeight(double idf) {
+    protected void generateWeight(double idf) {
         weight = frequency * idf;
     }
 
-    public double getWeight() {
+    protected double getWeight() {
         return weight;
     }
 
-    public void generateNormalizedWeight(double weightSum) {
+    protected void generateNormalizedWeight(double weightSum) {
         weight = weight / weightSum;
     }
 

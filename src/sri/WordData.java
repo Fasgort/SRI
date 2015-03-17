@@ -17,27 +17,27 @@ public class WordData implements Comparable<WordData> {
     private int count;
     final private Map<Integer, FileFrequency> fileFrequency;
 
-    public WordData(IndexedWord _word) {
+    protected WordData(IndexedWord _word) {
         word = _word;
         count = 0;
         fileFrequency = new HashMap(10000);
     }
 
-    public FileFrequency search(IndexedFile file) {
+    protected FileFrequency search(IndexedFile file) {
         return fileFrequency.get(file.getID());
     }
 
-    public void add(IndexedFile file) {
+    protected void add(IndexedFile file) {
         fileFrequency.put(file.getID(), new FileFrequency(file));
         word.addDocument();
         count++;
     }
 
-    public void generateIDF(int numberDocuments) {
+    protected void generateIDF(int numberDocuments) {
         word.generateIDF(numberDocuments);
     }
 
-    public void generateWeight() {
+    protected void generateWeight() {
         Collection<FileFrequency> collect = fileFrequency.values();
         Iterator<FileFrequency> it = collect.iterator();
 
@@ -60,19 +60,19 @@ public class WordData implements Comparable<WordData> {
         }
     }
 
-    public String getWord() {
+    protected String getWord() {
         return word.getWord();
     }
 
-    public Integer getID() {
+    protected Integer getID() {
         return word.getID();
     }
 
-    public void addCount() {
+    protected void addCount() {
         count++;
     }
 
-    public int getCount() {
+    protected int getCount() {
         return count;
     }
 

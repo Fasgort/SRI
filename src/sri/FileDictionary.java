@@ -1,5 +1,10 @@
 package sri;
 
+import java.io.File;
+import java.io.FileInputStream;
+import java.io.FileOutputStream;
+import java.io.ObjectInputStream;
+import java.io.ObjectOutputStream;
 import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.Iterator;
@@ -15,24 +20,57 @@ public class FileDictionary {
     final private ArrayList<IndexedFile> fileIDs; // File Dictionary ID -> file
     final private Map<String, Integer> files; // File Dictionary file -> ID
 
-    protected FileDictionary() {
-        fileIDs = new ArrayList(200);
-        files = new HashMap(300);
-        // Cargar los IndexedFile serializados aquí.
+    protected FileDictionary(String stringDirDictionary) {
+        ArrayList<IndexedFile> _fileIDs = null;
+        Map<String, Integer> _files = null;
+
+        File dirDictionary = new File(stringDirDictionary);
+        dirDictionary.mkdir();
+        File serDictionary = new File(stringDirDictionary + "fileDictionary.ser");
+        if (serDictionary.canRead()) {
+            try {
+                FileInputStream fis = new FileInputStream(serDictionary);
+                try (ObjectInputStream ois = new ObjectInputStream(fis)) {
+                    _fileIDs = (ArrayList<IndexedFile>) ois.readObject();
+                    _files = new HashMap(300);
+
+                    Iterator<IndexedFile> it = _fileIDs.iterator();
+                    while (it.hasNext()) {
+                        IndexedFile iW = it.next();
+                        _files.put(iW.getFile(), iW.getID());
+                    }
+                    IndexedFile.setNextID(_fileIDs.size());
+                }
+            } catch (Exception e) {
+                System.out.println("FileDictionary failed loading its serialized file.");
+            }
+        }
+
+        if (_fileIDs == null) {
+            fileIDs = new ArrayList(200);
+        } else {
+            fileIDs = _fileIDs;
+        }
+
+        if (_files == null) {
+            files = new HashMap(300);
+        } else {
+            files = _files;
+        }
     }
 
-    public static FileDictionary getInstance() {
+    protected static FileDictionary getInstance(String stringDirDictionary) {
         if (instance == null) {
-            instance = new FileDictionary();
+            instance = new FileDictionary(stringDirDictionary);
         }
         return instance;
     }
 
-    public Integer search(String file) {
+    protected Integer search(String file) {
         return files.get(file);
     }
 
-    public IndexedFile search(Integer idFile) {
+    protected IndexedFile search(Integer idFile) {
         if (idFile < fileIDs.size()) {
             return fileIDs.get(idFile);
         } else {
@@ -40,23 +78,36 @@ public class FileDictionary {
         }
     }
 
-    public Integer add(IndexedFile newFile) {
+    protected Integer add(IndexedFile newFile) {
         Integer idFile = newFile.getID();
         files.put(newFile.getFile(), idFile);
         fileIDs.add(idFile, newFile);
         return idFile;
     }
 
-    public void frequencyBuilt() {
+    protected void frequencyBuilt() {
         Iterator<IndexedFile> it = fileIDs.iterator();
 
         while (it.hasNext()) {
             it.next().setBuiltFrequency();
         }
     }
-    
-    public int size(){
+
+    protected int size() {
         return fileIDs.size();
+    }
+
+    protected void saveDictionary(String stringDirDictionary) {
+        try {
+            File dirDictionary = new File(stringDirDictionary);
+            dirDictionary.mkdir();
+            FileOutputStream fos = new FileOutputStream(stringDirDictionary + "fileDictionary.ser");
+            try (ObjectOutputStream oos = new ObjectOutputStream(fos)) {
+                oos.writeObject(fileIDs);
+            }
+        } catch (Exception e) {
+            System.out.println("Failed serializing file dictionary.");
+        }
     }
 
 }

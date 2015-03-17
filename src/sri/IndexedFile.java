@@ -12,49 +12,50 @@ public class IndexedFile implements Comparable<IndexedFile>, Serializable {
     private static Integer idNext = 0;
     final private String file;
     final private Integer idFile;
-    private long checksum;
-    private transient int maxCount;
-    private transient boolean builtFrequency;
+    private long checksum = -1;
+    private transient int maxCount = 0;
+    private transient boolean builtFrequency = false;
 
-    public IndexedFile(String _file) {
+    protected IndexedFile(String _file) {
         file = _file;
         idFile = idNext++;
-        checksum = -1;
-        maxCount = 1;
-        builtFrequency = false;
     }
 
-    public String getFile() {
+    protected static void setNextID(Integer _idNext) {
+        idNext = _idNext;
+    }
+
+    protected String getFile() {
         return file;
     }
 
-    public Integer getID() {
+    protected Integer getID() {
         return idFile;
     }
 
-    public void setChecksum(long _checksum) {
+    protected void setChecksum(long _checksum) {
         checksum = _checksum;
     }
 
-    public long getChecksum() {
+    protected long getChecksum() {
         return checksum;
     }
 
-    public void updateMaxCount(int count) {
+    protected void updateMaxCount(int count) {
         if (count > maxCount) {
             maxCount = count;
         }
     }
 
-    public int getMaxCount() {
+    protected int getMaxCount() {
         return maxCount;
     }
 
-    public void setBuiltFrequency() {
+    protected void setBuiltFrequency() {
         builtFrequency = true;
     }
 
-    public boolean getBuiltFrequency() {
+    protected boolean getBuiltFrequency() {
         return builtFrequency;
     }
 

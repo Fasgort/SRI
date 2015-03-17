@@ -7,3 +7,4 @@ stringDirColEnN = ./coleccionEnNormalized/
 stringDirColEnStop = ./coleccionEnStopped/
 stringDirColEnStem = ./coleccionEnStemmed/
 stringDirColEnSer = ./coleccionEnSerialized/
+stringDirDictionary = ./dictionary/
