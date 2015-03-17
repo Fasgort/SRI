@@ -6,6 +6,7 @@ import java.io.FileInputStream;
 import java.io.FileOutputStream;
 import java.io.FileReader;
 import java.io.FileWriter;
+import java.io.InputStream;
 import java.io.ObjectInputStream;
 import java.io.ObjectOutputStream;
 import java.util.ArrayList;
@@ -14,6 +15,8 @@ import java.util.LinkedList;
 import java.util.Set;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
+import java.util.zip.Adler32;
+import java.util.zip.Checksum;
 
 /**
  *
@@ -156,6 +159,24 @@ public class SRI {
             Integer idFile = dataManager.searchFile(file);
             boolean skip = false;
 
+            // Comprobar checksum
+            try (InputStream fis = new FileInputStream(stringDirColEn + file)) {
+                Checksum checksum;
+                byte[] buffer = new byte[1024];
+                checksum = new Adler32();
+                int numRead;
+                do {
+                    numRead = fis.read(buffer);
+                    if (numRead > 0) {
+                        checksum.update(buffer, 0, numRead);
+                    }
+                } while (numRead != -1);
+                System.out.println("File: " + file + " has checksum " + checksum.getValue());
+            } catch (Exception e) {
+                System.out.println("Checksum failed.");
+            }
+
+            // Fin comprobado
             File serializedFile = new File(stringDirColEnSer + file.replace(".html", ".ser"));
             if (serializedFile.canRead() && "true".equals(serialize)) {
                 try {
@@ -313,19 +334,29 @@ public class SRI {
                 "Top 5 frequent words after stemming: ");
 
         wd = top5FrequentWords.removeFirst();
-        System.out.println("   " + wd.getWord() + " with " + wd.getCount() + " apparitions in documents.");
+
+        System.out.println(
+                "   " + wd.getWord() + " with " + wd.getCount() + " apparitions in documents.");
 
         wd = top5FrequentWords.removeFirst();
-        System.out.println("   " + wd.getWord() + " with " + wd.getCount() + " apparitions in documents.");
+
+        System.out.println(
+                "   " + wd.getWord() + " with " + wd.getCount() + " apparitions in documents.");
 
         wd = top5FrequentWords.removeFirst();
-        System.out.println("   " + wd.getWord() + " with " + wd.getCount() + " apparitions in documents.");
+
+        System.out.println(
+                "   " + wd.getWord() + " with " + wd.getCount() + " apparitions in documents.");
 
         wd = top5FrequentWords.removeFirst();
-        System.out.println("   " + wd.getWord() + " with " + wd.getCount() + " apparitions in documents.");
+
+        System.out.println(
+                "   " + wd.getWord() + " with " + wd.getCount() + " apparitions in documents.");
 
         wd = top5FrequentWords.removeFirst();
-        System.out.println("   " + wd.getWord() + " with " + wd.getCount() + " apparitions in documents.");
+
+        System.out.println(
+                "   " + wd.getWord() + " with " + wd.getCount() + " apparitions in documents.");
         System.out.println();
         // Fin Estadísticas
 
