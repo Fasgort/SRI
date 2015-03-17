@@ -10,7 +10,7 @@ import java.util.LinkedList;
  */
 public class DataManager {
     
-    static private DataManager instance = null;
+    private static DataManager instance = null;
     final private FileDictionary fileDictionary;
     final private WordDictionary wordDictionary;
     ArrayList<WordData> wordFrequency;

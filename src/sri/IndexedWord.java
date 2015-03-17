@@ -1,18 +1,20 @@
 package sri;
 
+import java.io.Serializable;
 import static java.lang.StrictMath.log;
 
 /**
  *
  * @author Fasgort
  */
-public class IndexedWord implements Comparable<IndexedWord> {
+public class IndexedWord implements Comparable<IndexedWord>, Serializable {
 
-    static private Integer idNext = 0;
+    private static final long serialVersionUID = 8769534561148736806L;
+    private static Integer idNext = 0;
     final private String word;
     final private Integer idWord;
-    private int documentCount;
-    private double idf;
+    private transient int documentCount;
+    private transient double idf;
 
     public IndexedWord(String _word) {
         word = _word;

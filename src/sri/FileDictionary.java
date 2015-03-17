@@ -11,13 +11,14 @@ import java.util.Map;
  */
 public class FileDictionary {
 
-    static private FileDictionary instance = null;
+    private static FileDictionary instance = null;
     final private ArrayList<IndexedFile> fileIDs; // File Dictionary ID -> file
     final private Map<String, Integer> files; // File Dictionary file -> ID
 
     protected FileDictionary() {
         fileIDs = new ArrayList(200);
         files = new HashMap(300);
+        // Cargar los IndexedFile serializados aquí.
     }
 
     public static FileDictionary getInstance() {

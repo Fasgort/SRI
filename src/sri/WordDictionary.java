@@ -10,13 +10,14 @@ import java.util.Map;
  */
 public class WordDictionary {
 
-    static private WordDictionary instance = null;
+    private static WordDictionary instance = null;
     final private ArrayList<IndexedWord> wordIDs; // File Dictionary ID -> word
     final private Map<String, Integer> words; // File Dictionary word -> ID
 
     protected WordDictionary() {
         wordIDs = new ArrayList(200);
         words = new HashMap(300);
+        // Cargar los IndexedWord serializados aquí.
     }
 
     public static WordDictionary getInstance() {

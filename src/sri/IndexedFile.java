@@ -1,17 +1,20 @@
 package sri;
 
+import java.io.Serializable;
+
 /**
  *
  * @author Fasgort
  */
-public class IndexedFile implements Comparable<IndexedFile> {
+public class IndexedFile implements Comparable<IndexedFile>, Serializable {
 
-    static private Integer idNext = 0;
+    private static final long serialVersionUID = -4509962320335592519L;
+    private static Integer idNext = 0;
     final private String file;
     final private Integer idFile;
     private long checksum;
-    private int maxCount;
-    private boolean builtFrequency;
+    private transient int maxCount;
+    private transient boolean builtFrequency;
 
     public IndexedFile(String _file) {
         file = _file;
