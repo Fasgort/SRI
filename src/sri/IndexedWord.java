@@ -1,7 +1,6 @@
 package sri;
 
 import java.io.Serializable;
-import static java.lang.StrictMath.log;
 
 /**
  *
