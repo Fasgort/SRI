@@ -1,6 +1,5 @@
 package sri;
 
-import cern.colt.matrix.tdouble.impl.SparseCCDoubleMatrix2D;
 import cern.colt.matrix.tdouble.impl.SparseDoubleMatrix2D;
 import cern.colt.matrix.tdouble.impl.SparseRCDoubleMatrix2D;
 import java.io.FileOutputStream;
@@ -23,7 +22,6 @@ public class DataManager {
     final private WordDictionary wordDictionary;
     ArrayList<WordData> wordData;
     ArrayList<FileData> fileData;
-    private SparseDoubleMatrix2D index;
 
     protected DataManager() {
         fileDictionary = FileDictionary.getInstance();
@@ -117,7 +115,7 @@ public class DataManager {
         Iterator<IndexedFile> itf;
 
         // Initialize index
-        index = new SparseDoubleMatrix2D(numberWords, numberDocuments);
+        SparseDoubleMatrix2D index = new SparseDoubleMatrix2D(numberWords, numberDocuments);
 
         // Generate IDF
         itw = wordDictionary.iterator();
@@ -128,13 +126,13 @@ public class DataManager {
         }
 
         // Generate Weight
-        itw = wordDictionary.iterator();
-        while (itw.hasNext()) {
-            IndexedWord iW = itw.next();
-            itf = fileDictionary.iterator();
+        itf = fileDictionary.iterator();
+        while (itf.hasNext()) {
+            IndexedFile iF = itf.next();
+            itw = wordDictionary.iterator();
             double normFile = 0;
-            while (itf.hasNext()) {
-                IndexedFile iF = itf.next();
+            while (itw.hasNext()) {
+                IndexedWord iW = itw.next();
                 FileFrequency ff = wordData.get(iW.getID()).search(iF);
                 double weight;
                 if (ff == null) {
@@ -146,24 +144,28 @@ public class DataManager {
                 index.setQuick(iW.getID(), iF.getID(), weight);
             }
             normFile = sqrt(normFile);
-            itf = fileDictionary.iterator();
-            while (itf.hasNext()) {
-                IndexedFile iF = itf.next();
+            iF.setNorm(normFile);
+            itw = wordDictionary.iterator();
+            while (itw.hasNext()) {
+                IndexedWord iW = itw.next();
                 double normWeight = index.getQuick(iW.getID(), iF.getID()) / normFile;
                 index.setQuick(iW.getID(), iF.getID(), normWeight);
             }
         }
+
+        SparseRCDoubleMatrix2D compressedIndex = index.getRowCompressed(false);
 
         try {
             ConfigReader configReader = ConfigReader.getInstance();
 
             FileOutputStream fos = new FileOutputStream(configReader.getStringWeightIndex());
             try (ObjectOutputStream oos = new ObjectOutputStream(fos)) {
-                oos.writeObject(index.getRowCompressed(false));
+                oos.writeObject(compressedIndex);
             }
         } catch (Exception e) {
-            System.out.println("Failed serializing file dictionary.");
+            System.out.println("Failed serializing weight table.");
         }
+
     }
 
     public void saveDictionary(String stringDirDictionary) {
