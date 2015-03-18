@@ -214,6 +214,7 @@ public class SRI_Indexer {
 
         // Generación de listas de palabras frecuentes
         LinkedList<WordData> topFrequentWords = dataManager.topFrequentWords(5);
+
         // Fin de operaciónes
         long end = System.currentTimeMillis();
 
