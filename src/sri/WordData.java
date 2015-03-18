@@ -1,31 +1,36 @@
 package sri;
 
-import java.util.HashMap;
-import java.util.Map;
+import cern.colt.matrix.tint.impl.SparseIntMatrix1D;
 
 /**
  *
  * @author Fasgort
  */
-public class WordData implements Comparable<WordData> {
+public class WordData {
 
     final private IndexedWord word;
-    private int count;
-    final private Map<Integer, FileFrequency> fileFrequency;
+    final private SparseIntMatrix1D fileFrequency;
+    private int wordCount = 0;
 
     protected WordData(IndexedWord _word) {
         word = _word;
-        count = 0;
-        fileFrequency = new HashMap(7500);
+        fileFrequency = new SparseIntMatrix1D(7500);
     }
 
-    protected FileFrequency search(IndexedFile file) {
-        return fileFrequency.get(file.getID());
+    protected void add(int fileID) {
+        try {
+            fileFrequency.set(fileID, fileFrequency.getQuick(fileID) + 1);
+            wordCount++;
+        } catch (Exception e) {
+            fileFrequency.setSize(fileID * 2);
+        } finally {
+            fileFrequency.set(fileID, fileFrequency.getQuick(fileID) + 1);
+            wordCount++;
+        }
     }
 
-    protected void add(IndexedFile file) {
-        fileFrequency.put(file.getID(), new FileFrequency(file));
-        count++;
+    protected int search(int fileID) {
+        return fileFrequency.getQuick(fileID);
     }
 
     protected String getWord() {
@@ -36,21 +41,12 @@ public class WordData implements Comparable<WordData> {
         return word.getID();
     }
 
-    protected void addCount() {
-        count++;
+    protected int getWordCount() {
+        return wordCount;
     }
 
-    protected int getCount() {
-        return count;
-    }
-
-    protected int size() {
-        return fileFrequency.size();
-    }
-
-    @Override
-    public int compareTo(WordData w) {
-        return w.count - count;
+    protected int cardinality() {
+        return fileFrequency.cardinality();
     }
 
 }

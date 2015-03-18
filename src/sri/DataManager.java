@@ -88,24 +88,10 @@ public class DataManager {
 
     public void addFrequency(Integer idWord, Integer idFile) {
         WordData wd = wordData.get(idWord);
-        IndexedFile iF = fileDictionary.search(idFile);
-        FileFrequency ff = wd.search(iF);
-        if (ff == null) {
-            wd.add(iF);
-        } else {
-            ff.addCount();
-            wd.addCount();
-        }
+        wd.add(idFile);
 
         FileData fd = fileData.get(idFile);
-        IndexedWord iW = wordDictionary.search(idWord);
-        WordFrequency wf = fd.search(iW);
-        if (wf == null) {
-            fd.add(iW);
-        } else {
-            wf.addCount();
-            fd.addCount();
-        }
+        fd.add(idFile);
     }
 
     public void generateIndex() {
@@ -121,7 +107,7 @@ public class DataManager {
         itw = wordDictionary.iterator();
         while (itw.hasNext()) {
             IndexedWord iW = itw.next();
-            int documentsWithWord = wordData.get(iW.getID()).size();
+            int documentsWithWord = wordData.get(iW.getID()).cardinality();
             iW.setIDF(log((double) numberDocuments / (double) documentsWithWord));
         }
 
@@ -133,13 +119,8 @@ public class DataManager {
             double normFile = 0;
             while (itw.hasNext()) {
                 IndexedWord iW = itw.next();
-                FileFrequency ff = wordData.get(iW.getID()).search(iF);
-                double weight;
-                if (ff == null) {
-                    weight = 0.0;
-                } else {
-                    weight = (double) ff.getCount() * (double) iW.getIDF();
-                }
+                int fileFrequency = wordData.get(iW.getID()).search(iF.getID());
+                double weight = (double) fileFrequency * (double) iW.getIDF();
                 normFile += pow(weight, 2);
                 index.setQuick(iW.getID(), iF.getID(), weight);
             }
@@ -180,7 +161,7 @@ public class DataManager {
         int minFrequency = 0;
         while (wordIterator.hasNext()) {
             WordData word1 = wordIterator.next();
-            if (word1.getCount() > minFrequency || list.size() < sizeList) {
+            if (word1.getWordCount() > minFrequency || list.size() < sizeList) {
                 if (list.size() == 0) {
                     list.add(word1);
                 } else {
@@ -189,7 +170,7 @@ public class DataManager {
                     boolean added = false;
                     while (listIterator.hasNext()) {
                         WordData word2 = listIterator.next();
-                        if (word1.getCount() <= word2.getCount()) {
+                        if (word1.getWordCount() <= word2.getWordCount()) {
                             list.add(i, word1);
                             added = true;
                             break;
@@ -202,7 +183,7 @@ public class DataManager {
                     }
                 }
                 if (list.size() > sizeList) {
-                    minFrequency = list.getLast().getCount();
+                    minFrequency = list.getLast().getWordCount();
                     list.removeLast();
                 }
             }

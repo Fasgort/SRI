@@ -22,7 +22,7 @@ public class FileDictionary {
 
     private FileDictionary() {
         ConfigReader configReader = ConfigReader.getInstance();
-        
+
         ArrayList<IndexedFile> _fileIDs = null;
         Map<String, Integer> _files = null;
 

@@ -182,20 +182,25 @@ public class SRI_Indexer {
                     }
                 }
 
-            }
+                File dirStem = new File(configReader.getStringDirColEnStem());
+                dirStem.mkdir();
+                try (FileWriter wr = new FileWriter(configReader.getStringDirColEnStem() + file.replace(".html", ".txt"))) {
+                    for (String j : tokenList) {
+                        wr.write(j + "\n");
+                        Integer idWord = dataManager.searchWord(j);
+                        dataManager.addFrequency(idWord, idFile);
+                    }
+                } catch (Exception e) {
+                    System.out.println("Failed saving stemmed file " + file);
+                }
+                // Fin Módulo Stemmer
 
-            File dirStem = new File(configReader.getStringDirColEnStem());
-            dirStem.mkdir();
-            try (FileWriter wr = new FileWriter(configReader.getStringDirColEnStem() + file.replace(".html", ".txt"))) {
+            } else {
                 for (String j : tokenList) {
-                    wr.write(j + "\n");
                     Integer idWord = dataManager.searchWord(j);
                     dataManager.addFrequency(idWord, idFile);
                 }
-            } catch (Exception e) {
-                System.out.println("Failed saving stemmed file " + file);
             }
-            // Fin Módulo Stemmer
 
         }
 
@@ -209,7 +214,6 @@ public class SRI_Indexer {
 
         // Generación de listas de palabras frecuentes
         LinkedList<WordData> topFrequentWords = dataManager.topFrequentWords(5);
-
         // Fin de operaciónes
         long end = System.currentTimeMillis();
 
@@ -252,7 +256,7 @@ public class SRI_Indexer {
         int topSize = topFrequentWords.size();
         for (int i = 0; i < topSize; i++) {
             wd = topFrequentWords.removeFirst();
-            System.out.println("   " + wd.getWord() + " with " + wd.getCount() + " apparitions in documents.");
+            System.out.println("   " + wd.getWord() + " with " + wd.getWordCount() + " apparitions in documents.");
         }
         System.out.println();
         // Fin Estadísticas

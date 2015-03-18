@@ -14,7 +14,6 @@ public class IndexedFile implements Comparable<IndexedFile>, Serializable {
     final private Integer idFile;
     private long checksum = -1;
     private double norm = 0.0;
-    private transient int maxFrequentWord = 0;
 
     protected IndexedFile(String _file) {
         file = _file;
@@ -47,14 +46,6 @@ public class IndexedFile implements Comparable<IndexedFile>, Serializable {
 
     protected double getNorm() {
         return norm;
-    }
-
-    protected void setMaxFrequentWord(int count) {
-        maxFrequentWord = count;
-    }
-
-    protected int getMaxFrequentWord() {
-        return maxFrequentWord;
     }
 
     @Override

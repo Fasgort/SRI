@@ -1,69 +1,45 @@
 package sri;
 
-import java.util.HashMap;
-import java.util.Iterator;
-import java.util.Map;
+import cern.colt.matrix.tint.impl.SparseIntMatrix1D;
 
 /**
  *
  * @author Fasgort
  */
-public class FileData implements Comparable<FileData> {
+public class FileData {
 
     final private IndexedFile file;
-    private int count;
-    final private Map<Integer, WordFrequency> wordFrequency;
+    final private SparseIntMatrix1D wordFrequency;
 
     public FileData(IndexedFile _file) {
         file = _file;
-        count = 0;
-        wordFrequency = new HashMap(500);
+        wordFrequency = new SparseIntMatrix1D(5000);
     }
 
-    public WordFrequency search(IndexedWord word) {
-        return wordFrequency.get(word.getID());
-    }
-
-    public void add(IndexedWord word) {
-        wordFrequency.put(word.getID(), new WordFrequency(word));
-        count++;
-    }
-
-    public void updateMaxFrequentWord() {
-        Iterator<WordFrequency> it = wordFrequency.values().iterator();
-        int maxCount = -1;
-        while (it.hasNext()) {
-            WordFrequency wf = it.next();
-            if (wf.getCount() > maxCount) {
-                maxCount = wf.getCount();
-            }
+    protected void add(int wordID) {
+        try {
+            wordFrequency.set(wordID, wordFrequency.getQuick(wordID) + 1);
+        } catch (Exception e) {
+            wordFrequency.setSize(wordID * 2);
+        } finally {
+            wordFrequency.set(wordID, wordFrequency.getQuick(wordID) + 1);
         }
-        file.setMaxFrequentWord(maxCount);
     }
 
-    public String getFile() {
+    protected int search(int wordID) {
+        return wordFrequency.getQuick(wordID);
+    }
+
+    protected String getFile() {
         return file.getFile();
     }
 
-    public Integer getID() {
+    protected Integer getID() {
         return file.getID();
     }
 
-    public void addCount() {
-        count++;
-    }
-
-    public int getCount() {
-        return count;
-    }
-
-    public int size() {
-        return wordFrequency.size();
-    }
-    
-    @Override
-    public int compareTo(FileData w) {
-        return w.count - count;
+    protected int cardinality() {
+        return wordFrequency.cardinality();
     }
 
 }
