@@ -1,6 +1,10 @@
 package sri;
 
+import cern.colt.matrix.tdouble.impl.SparseCCDoubleMatrix2D;
 import cern.colt.matrix.tdouble.impl.SparseDoubleMatrix2D;
+import cern.colt.matrix.tdouble.impl.SparseRCDoubleMatrix2D;
+import java.io.FileOutputStream;
+import java.io.ObjectOutputStream;
 import static java.lang.StrictMath.log;
 import static java.lang.StrictMath.pow;
 import static java.lang.StrictMath.sqrt;
@@ -32,7 +36,7 @@ public class DataManager {
             IndexedWord iW = wordDic.get(i);
             wordData.add(i, new WordData(iW));
         }
-        
+
         ArrayList<IndexedFile> fileDic = fileDictionary.accessDictionary();
         for (int i = 0; i < fileDic.size(); i++) {
             IndexedFile iF = fileDic.get(i);
@@ -139,17 +143,27 @@ public class DataManager {
                     weight = (double) ff.getCount() * (double) iW.getIDF();
                 }
                 normFile += pow(weight, 2);
-                index.set(iW.getID(), iF.getID(), weight);
+                index.setQuick(iW.getID(), iF.getID(), weight);
             }
             normFile = sqrt(normFile);
             itf = fileDictionary.iterator();
             while (itf.hasNext()) {
                 IndexedFile iF = itf.next();
-                double normWeight = index.get(iW.getID(), iF.getID()) / normFile;
-                index.set(iW.getID(), iF.getID(), normWeight);
+                double normWeight = index.getQuick(iW.getID(), iF.getID()) / normFile;
+                index.setQuick(iW.getID(), iF.getID(), normWeight);
             }
         }
 
+        try {
+            ConfigReader configReader = ConfigReader.getInstance();
+
+            FileOutputStream fos = new FileOutputStream(configReader.getStringWeightIndex());
+            try (ObjectOutputStream oos = new ObjectOutputStream(fos)) {
+                oos.writeObject(index.getRowCompressed(false));
+            }
+        } catch (Exception e) {
+            System.out.println("Failed serializing file dictionary.");
+        }
     }
 
     public void saveDictionary(String stringDirDictionary) {

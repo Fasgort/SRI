@@ -8,3 +8,4 @@ stringDirColEnStop = ./coleccionEnStopped/
 stringDirColEnStem = ./coleccionEnStemmed/
 stringDirColEnSer = ./coleccionEnSerialized/
 stringDirDictionary = ./dictionary/
+stringWeightIndex = weightIndex.ser
