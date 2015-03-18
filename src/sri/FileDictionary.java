@@ -72,11 +72,15 @@ public class FileDictionary {
         return fileIDs;
     }
 
-    protected Integer search(String file) {
-        return files.get(file);
+    protected int search(String file) {
+        Integer idWord = files.get(file);
+        if (idWord == null) {
+            return -1;
+        }
+        return idWord;
     }
 
-    protected IndexedFile search(Integer idFile) {
+    protected IndexedFile search(int idFile) {
         if (idFile < fileIDs.size()) {
             return fileIDs.get(idFile);
         } else {
@@ -84,8 +88,8 @@ public class FileDictionary {
         }
     }
 
-    protected Integer add(IndexedFile newFile) {
-        Integer idFile = newFile.getID();
+    protected int add(IndexedFile newFile) {
+        int idFile = newFile.getID();
         files.put(newFile.getFile(), idFile);
         fileIDs.add(idFile, newFile);
         return idFile;

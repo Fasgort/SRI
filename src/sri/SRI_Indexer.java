@@ -212,14 +212,11 @@ public class SRI_Indexer {
             dataManager.saveDictionary(configReader.getStringDirDictionary());
         }
 
-        // Generación de listas de palabras frecuentes
-        LinkedList<WordData> topFrequentWords = dataManager.topFrequentWords(5);
-
         // Fin de operaciónes
         long end = System.currentTimeMillis();
 
         // Estadísticas
-        WordData wd;
+        int topFrequentWordsSize = 5;
 
         System.out.println(
                 "Operation was completed in " + (end - start) + " milliseconds.");
@@ -247,18 +244,10 @@ public class SRI_Indexer {
             System.out.println();
         }
 
-        System.out.println(
-                "Number of unique words after stemming: " + dataManager.wordQuantity());
-        System.out.println(
-                "Average unique words after stemming: " + dataManager.wordQuantity() / arrayHTMLfile.length);
-        System.out.println(
-                "Top 5 frequent words after stemming: ");
-
-        int topSize = topFrequentWords.size();
-        for (int i = 0; i < topSize; i++) {
-            wd = topFrequentWords.removeFirst();
-            System.out.println("   " + wd.getWord() + " with " + wd.getWordCount() + " apparitions in documents.");
-        }
+        System.out.println("Number of processed words: " + dataManager.wordQuantity());
+        System.out.println("Number of processed documents: " + dataManager.fileQuantity());
+        System.out.println("Top " + topFrequentWordsSize + " frequent words:");
+        dataManager.topFrequentWords(topFrequentWordsSize);
         System.out.println();
         // Fin Estadísticas
 

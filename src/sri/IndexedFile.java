@@ -9,9 +9,9 @@ import java.io.Serializable;
 public class IndexedFile implements Comparable<IndexedFile>, Serializable {
 
     private static final long serialVersionUID = -4509962320335592519L;
-    private static Integer idNext = 0;
+    private static int idNext = 0;
     final private String file;
-    final private Integer idFile;
+    final private int idFile;
     private long checksum = -1;
     private double norm = 0.0;
 
@@ -20,7 +20,7 @@ public class IndexedFile implements Comparable<IndexedFile>, Serializable {
         idFile = idNext++;
     }
 
-    protected static void setNextID(Integer _idNext) {
+    protected static void setNextID(int _idNext) {
         idNext = _idNext;
     }
 
@@ -28,7 +28,7 @@ public class IndexedFile implements Comparable<IndexedFile>, Serializable {
         return file;
     }
 
-    protected Integer getID() {
+    protected int getID() {
         return idFile;
     }
 

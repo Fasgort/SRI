@@ -9,9 +9,9 @@ import java.io.Serializable;
 public class IndexedWord implements Comparable<IndexedWord>, Serializable {
 
     private static final long serialVersionUID = 8769534561148736806L;
-    private static Integer idNext = 0;
+    private static int idNext = 0;
     final private String word;
-    final private Integer idWord;
+    final private int idWord;
     private double idf;
 
     protected IndexedWord(String _word) {
@@ -20,7 +20,7 @@ public class IndexedWord implements Comparable<IndexedWord>, Serializable {
         idf = 0.0;
     }
 
-    protected static void setNextID(Integer _idNext) {
+    protected static void setNextID(int _idNext) {
         idNext = _idNext;
     }
 
@@ -28,7 +28,7 @@ public class IndexedWord implements Comparable<IndexedWord>, Serializable {
         return word;
     }
 
-    protected Integer getID() {
+    protected int getID() {
         return idWord;
     }
 

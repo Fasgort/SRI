@@ -73,11 +73,15 @@ public class WordDictionary {
         return wordIDs;
     }
 
-    protected Integer search(String word) {
-        return words.get(word);
+    protected int search(String word) {
+        Integer idWord = words.get(word);
+        if (idWord == null) {
+            return -1;
+        }
+        return idWord;
     }
 
-    protected IndexedWord search(Integer idWord) {
+    protected IndexedWord search(int idWord) {
         if (idWord < wordIDs.size()) {
             return wordIDs.get(idWord);
         } else {
@@ -85,8 +89,8 @@ public class WordDictionary {
         }
     }
 
-    protected Integer add(IndexedWord newWord) {
-        Integer idWord = newWord.getID();
+    protected int add(IndexedWord newWord) {
+        int idWord = newWord.getID();
         words.put(newWord.getWord(), idWord);
         wordIDs.add(idWord, newWord);
         return idWord;
