@@ -20,13 +20,15 @@ public class FileDictionary {
     final private ArrayList<IndexedFile> fileIDs; // File Dictionary ID -> file
     final private Map<String, Integer> files; // File Dictionary file -> ID
 
-    protected FileDictionary(String stringDirDictionary) {
+    private FileDictionary() {
+        ConfigReader configReader = ConfigReader.getInstance();
+        
         ArrayList<IndexedFile> _fileIDs = null;
         Map<String, Integer> _files = null;
 
-        File dirDictionary = new File(stringDirDictionary);
+        File dirDictionary = new File(configReader.getStringDirDictionary());
         dirDictionary.mkdir();
-        File serDictionary = new File(stringDirDictionary + "fileDictionary.ser");
+        File serDictionary = new File(configReader.getStringDirDictionary() + "fileDictionary.ser");
         if (serDictionary.canRead()) {
             try {
                 FileInputStream fis = new FileInputStream(serDictionary);
@@ -59,9 +61,9 @@ public class FileDictionary {
         }
     }
 
-    protected static FileDictionary getInstance(String stringDirDictionary) {
+    protected static FileDictionary getInstance() {
         if (instance == null) {
-            instance = new FileDictionary(stringDirDictionary);
+            instance = new FileDictionary();
         }
         return instance;
     }

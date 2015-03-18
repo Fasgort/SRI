@@ -20,13 +20,15 @@ public class WordDictionary {
     final private ArrayList<IndexedWord> wordIDs; // File Dictionary ID -> word
     final private Map<String, Integer> words; // File Dictionary word -> ID
 
-    protected WordDictionary(String stringDirDictionary) {
+    private WordDictionary() {
+        ConfigReader configReader = ConfigReader.getInstance();
+
         ArrayList<IndexedWord> _wordIDs = null;
         Map<String, Integer> _words = null;
 
-        File dirDictionary = new File(stringDirDictionary);
+        File dirDictionary = new File(configReader.getStringDirDictionary());
         dirDictionary.mkdir();
-        File serDictionary = new File(stringDirDictionary + "wordDictionary.ser");
+        File serDictionary = new File(configReader.getStringDirDictionary() + "wordDictionary.ser");
         if (serDictionary.canRead()) {
             try {
                 FileInputStream fis = new FileInputStream(serDictionary);
@@ -60,9 +62,9 @@ public class WordDictionary {
 
     }
 
-    protected static WordDictionary getInstance(String stringDirDictionary) {
+    protected static WordDictionary getInstance() {
         if (instance == null) {
-            instance = new WordDictionary(stringDirDictionary);
+            instance = new WordDictionary();
         }
         return instance;
     }

@@ -1,10 +1,8 @@
 package sri;
 
-import java.io.BufferedReader;
 import java.io.File;
 import java.io.FileInputStream;
 import java.io.FileOutputStream;
-import java.io.FileReader;
 import java.io.FileWriter;
 import java.io.InputStream;
 import java.io.ObjectInputStream;
@@ -13,8 +11,6 @@ import java.util.ArrayList;
 import java.util.HashSet;
 import java.util.LinkedList;
 import java.util.Set;
-import java.util.regex.Matcher;
-import java.util.regex.Pattern;
 import java.util.zip.Adler32;
 import java.util.zip.Checksum;
 
@@ -29,103 +25,11 @@ public class SRI {
      */
     public static void main(String[] args) {
 
-        String debug = "false";
-        String serialize = "false";
-        String dirResources = null;
-        String stopWordFilename = null;
-        String stringDirColEn = null;
-        String stringDirColEnN = null;
-        String stringDirColEnStop = null;
-        String stringDirColEnStem = null;
-        String stringDirColEnSer = null;
-        String stringDirDictionary = null;
-
         // Lectura de configuración
-        File confData = new File("./conf.data");
-
-        try (FileReader fr = new FileReader(confData);
-                BufferedReader br = new BufferedReader(fr);) {
-
-            Pattern comment = Pattern.compile("^[\\w]+ = [\\w/.]+");
-            Matcher m;
-            String linea;
-
-            while ((linea = br.readLine()) != null) {
-                m = comment.matcher(linea);
-
-                if (m.find()) {
-                    linea = m.group();
-
-                    String atributo;
-                    String valor;
-
-                    Pattern atribP = Pattern.compile("^[\\w]+ ={0}");
-                    m = atribP.matcher(linea);
-                    if (m.find()) {
-                        atributo = m.group().trim();
-                    } else {
-                        continue;
-                    }
-
-                    Pattern atribV = Pattern.compile("={0} [\\w/.]+");
-                    m = atribV.matcher(linea);
-                    if (m.find()) {
-                        valor = m.group().trim();
-                    } else {
-                        continue;
-                    }
-
-                    switch (atributo) {
-                        case "debug":
-                            debug = valor;
-                            break;
-                        case "serialize":
-                            serialize = valor;
-                            break;
-                        case "dirResources":
-                            dirResources = valor;
-                            break;
-                        case "stopWordFilename":
-                            stopWordFilename = valor;
-                            break;
-                        case "stringDirColEn":
-                            stringDirColEn = valor;
-                            break;
-                        case "stringDirColEnN":
-                            stringDirColEnN = valor;
-                            break;
-                        case "stringDirColEnStop":
-                            stringDirColEnStop = valor;
-                            break;
-                        case "stringDirColEnStem":
-                            stringDirColEnStem = valor;
-                            break;
-                        case "stringDirColEnSer":
-                            stringDirColEnSer = valor;
-                            break;
-                        case "stringDirDictionary":
-                            stringDirDictionary = valor;
-                            break;
-                    }
-
-                }
-
-            }
-
-            br.close();
-
-        } catch (Exception e) {
-            System.out.println("Config file couldn't load. It must be included with the executable.");
+        ConfigReader configReader = ConfigReader.getInstance(args[0]);
+        if (configReader.fail()) {
             return;
         }
-
-        if (dirResources == null || stopWordFilename == null
-                || stringDirColEn == null || stringDirColEnN == null
-                || stringDirColEnStop == null || stringDirColEnStem == null) {
-            System.out.println("Config file syntax is wrong. SRI can't load correctly.");
-            return;
-        }
-        // Fin Lectura de configuración
 
         int numWords = 0;
         int minNumWords = Integer.MAX_VALUE;
@@ -136,11 +40,11 @@ public class SRI {
         int maxNumWords2 = Integer.MIN_VALUE;
 
         // DATA STRUCTURES
-        DataManager dataManager = DataManager.getInstance(stringDirDictionary);
+        DataManager dataManager = DataManager.getInstance();
         Set<String> stopWordSet = new HashSet(800); // Stop Word Dictionary
 
         // Lectura de directorio
-        File dirHTML = new File(stringDirColEn);
+        File dirHTML = new File(configReader.getStringDirColEn());
         dirHTML.mkdir();
 
         //Lectura de ficheros
@@ -166,7 +70,7 @@ public class SRI {
             boolean modified = false;
 
             // Generar checksum
-            try (InputStream fis = new FileInputStream(stringDirColEn + file)) {
+            try (InputStream fis = new FileInputStream(configReader.getStringDirColEn() + file)) {
                 byte[] buffer = new byte[1024];
                 checksum = new Adler32();
                 int numRead;
@@ -180,7 +84,7 @@ public class SRI {
                 // Comprobar diferencias en el archivo
                 if (!dataManager.checksumFile(idFile, checksum.getValue())) {
                     modified = true;
-                    if ("true".equals(debug)) {
+                    if ("true".equals(configReader.getDebug())) {
                         System.out.println("File " + file + " was modified.");
                     }
                     dataManager.updateChecksumFile(idFile, checksum.getValue());
@@ -190,8 +94,8 @@ public class SRI {
                 System.out.println("Checksum failed.");
             }
 
-            File serializedFile = new File(stringDirColEnSer + file.replace(".html", ".ser"));
-            if (serializedFile.canRead() && "true".equals(serialize) && !modified) {
+            File serializedFile = new File(configReader.getStringDirColEnSer() + file.replace(".html", ".ser"));
+            if (serializedFile.canRead() && "true".equals(configReader.getSerialize()) && !modified) {
                 try {
                     FileInputStream fis = new FileInputStream(serializedFile);
                     try (ObjectInputStream ois = new ObjectInputStream(fis)) {
@@ -205,9 +109,9 @@ public class SRI {
 
             if (!skip) {
 
-                String textFiltered = HTMLfilter.filterEN(stringDirColEn, file);
+                String textFiltered = HTMLfilter.filterEN(configReader.getStringDirColEn(), file);
                 if (textFiltered == null) {
-                    if ("true".equals(debug)) {
+                    if ("true".equals(configReader.getDebug())) {
                         System.out.println("File " + file + " was ignored and won't be included in the SE.");
                     }
                     continue;
@@ -215,9 +119,9 @@ public class SRI {
 
                 tokenList = HTMLfilter.normalize(textFiltered);
 
-                File dirNorm = new File(stringDirColEnN);
+                File dirNorm = new File(configReader.getStringDirColEnN());
                 dirNorm.mkdir();
-                try (FileWriter wr = new FileWriter(stringDirColEnN + file.replace(".html", ".txt"))) {
+                try (FileWriter wr = new FileWriter(configReader.getStringDirColEnN() + file.replace(".html", ".txt"))) {
                     for (String j : tokenList) {
                         wr.write(j + "\n");
                     }
@@ -235,14 +139,14 @@ public class SRI {
                 // Fin Filtrado HTML
 
                 // Módulo Stopper
-                tokenList = HTMLfilter.stopper(tokenList, stopWordSet, dirResources, stopWordFilename);
+                tokenList = HTMLfilter.stopper(tokenList, stopWordSet, configReader.getDirResources(), configReader.getStopWordFilename());
                 if (tokenList == null) {
                     continue;
                 }
 
-                File dirStop = new File(stringDirColEnStop);
+                File dirStop = new File(configReader.getStringDirColEnStop());
                 dirStop.mkdir();
-                try (FileWriter wr = new FileWriter(stringDirColEnStop + file.replace(".html", ".txt"))) {
+                try (FileWriter wr = new FileWriter(configReader.getStringDirColEnStop() + file.replace(".html", ".txt"))) {
                     for (String j : tokenList) {
                         wr.write(j + "\n");
                     }
@@ -260,24 +164,16 @@ public class SRI {
                 // Fin Módulo Stopper
 
                 // Módulo Stemmer
-                /*
-                 * Idea: Serializar los resultados del módulo Stemmer. Todos los 
-                 * ficheros una vez procesados, se serializan en un mismo fichero.
-                 * Además se guarda un valor hash de cada fichero y se compara
-                 * con el actual para comprobar que se trata del mismo fichero.
-                 * Este código hash se puede guardar en la clase IndexedFile.
-                 * El stream serializado se debe de guardar en una clase aparte.
-                 */
                 tokenList = HTMLfilter.stemmer(tokenList);
                 if (tokenList == null) {
                     continue;
                 }
 
-                if ("true".equals(serialize)) {
-                    File dirSer = new File(stringDirColEnSer);
+                if ("true".equals(configReader.getSerialize())) {
+                    File dirSer = new File(configReader.getStringDirColEnSer());
                     dirSer.mkdir();
                     try {
-                        FileOutputStream fos = new FileOutputStream(stringDirColEnSer + file.replace(".html", ".ser"));
+                        FileOutputStream fos = new FileOutputStream(configReader.getStringDirColEnSer() + file.replace(".html", ".ser"));
                         try (ObjectOutputStream oos = new ObjectOutputStream(fos)) {
                             oos.writeObject(tokenList);
                         }
@@ -288,9 +184,9 @@ public class SRI {
 
             }
 
-            File dirStem = new File(stringDirColEnStem);
+            File dirStem = new File(configReader.getStringDirColEnStem());
             dirStem.mkdir();
-            try (FileWriter wr = new FileWriter(stringDirColEnStem + file.replace(".html", ".txt"))) {
+            try (FileWriter wr = new FileWriter(configReader.getStringDirColEnStem() + file.replace(".html", ".txt"))) {
                 for (String j : tokenList) {
                     wr.write(j + "\n");
                     Integer idWord = dataManager.searchWord(j);
@@ -307,8 +203,8 @@ public class SRI {
         dataManager.generateIndex();
 
         // Serializa y guarda los diccionarios
-        if ("true".equals(serialize)) {
-            dataManager.saveDictionary(stringDirDictionary);
+        if ("true".equals(configReader.getSerialize())) {
+            dataManager.saveDictionary(configReader.getStringDirDictionary());
         }
 
         // Generación de listas de palabras frecuentes
@@ -324,7 +220,7 @@ public class SRI {
                 "Operation was completed in " + (end - start) + " milliseconds.");
         System.out.println();
 
-        if ("false".equals(serialize)) { // Si estamos usando ficheros serializados, no podemos generar estas estadísticas.
+        if ("false".equals(configReader.getSerialize())) { // Si estamos usando ficheros serializados, no podemos generar estas estadísticas.
             System.out.println(
                     "Number of words after filtering: " + numWords);
             System.out.println(

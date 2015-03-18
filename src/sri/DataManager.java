@@ -21,9 +21,9 @@ public class DataManager {
     ArrayList<FileData> fileData;
     private SparseDoubleMatrix2D index;
 
-    protected DataManager(String stringDirDictionary) {
-        fileDictionary = FileDictionary.getInstance(stringDirDictionary);
-        wordDictionary = WordDictionary.getInstance(stringDirDictionary);
+    protected DataManager() {
+        fileDictionary = FileDictionary.getInstance();
+        wordDictionary = WordDictionary.getInstance();
         wordData = new ArrayList(5000);
         fileData = new ArrayList(300);
 
@@ -41,9 +41,9 @@ public class DataManager {
 
     }
 
-    public static DataManager getInstance(String stringDirDictionary) {
+    public static DataManager getInstance() {
         if (instance == null) {
-            instance = new DataManager(stringDirDictionary);
+            instance = new DataManager();
         }
         return instance;
     }
