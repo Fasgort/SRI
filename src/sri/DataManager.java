@@ -2,7 +2,10 @@ package sri;
 
 import cern.colt.matrix.tdouble.impl.SparseDoubleMatrix2D;
 import cern.colt.matrix.tint.impl.SparseIntMatrix2D;
+import java.io.File;
+import java.io.FileInputStream;
 import java.io.FileOutputStream;
+import java.io.ObjectInputStream;
 import java.io.ObjectOutputStream;
 import static java.lang.StrictMath.log;
 import static java.lang.StrictMath.pow;
@@ -24,10 +27,50 @@ public class DataManager {
     SparseDoubleMatrix2D weightIndex;
 
     protected DataManager() {
+        ConfigReader configReader = ConfigReader.getInstance();
+
         fileDictionary = FileDictionary.getInstance();
         wordDictionary = WordDictionary.getInstance();
-        frequencyIndex = new SparseIntMatrix2D(7500, 300);
-        weightIndex = new SparseDoubleMatrix2D(7500, 300);
+
+        SparseIntMatrix2D _frequencyIndex = null;
+        SparseDoubleMatrix2D _weightIndex = null;
+
+        File serFrequency = new File(configReader.getStringFrequencyIndex());
+        if (serFrequency.canRead()) {
+            try {
+                FileInputStream fis = new FileInputStream(serFrequency);
+                try (ObjectInputStream ois = new ObjectInputStream(fis)) {
+                    _frequencyIndex = (SparseIntMatrix2D) ois.readObject();
+                }
+            } catch (Exception e) {
+                System.out.println("Failed loading serialized frequency index.");
+            }
+        }
+
+        File serWeight = new File(configReader.getStringWeightIndex());
+        if (serWeight.canRead()) {
+            try {
+                FileInputStream fis = new FileInputStream(serWeight);
+                try (ObjectInputStream ois = new ObjectInputStream(fis)) {
+                    _weightIndex = (SparseDoubleMatrix2D) ois.readObject();
+                }
+            } catch (Exception e) {
+                System.out.println("Failed loading serialized weight index.");
+            }
+        }
+
+        if (_frequencyIndex == null) {
+            frequencyIndex = new SparseIntMatrix2D(7500, 300);
+        } else {
+            frequencyIndex = _frequencyIndex;
+        }
+
+        if (_weightIndex == null) {
+            weightIndex = new SparseDoubleMatrix2D(7500, 300);
+        } else {
+            weightIndex = _weightIndex;
+        }
+
     }
 
     public static DataManager getInstance() {
@@ -113,6 +156,18 @@ public class DataManager {
                 double normWeight = weightIndex.getQuick(iW.getID(), iF.getID()) / normFile;
                 weightIndex.setQuick(iW.getID(), iF.getID(), normWeight);
             }
+        }
+
+        try {
+            ConfigReader configReader = ConfigReader.getInstance();
+
+            FileOutputStream fos = new FileOutputStream(configReader.getStringFrequencyIndex());
+            try (ObjectOutputStream oos = new ObjectOutputStream(fos)) {
+                frequencyIndex.trimToSize();
+                oos.writeObject(frequencyIndex);
+            }
+        } catch (Exception e) {
+            System.out.println("Failed serializing weight table.");
         }
 
         try {

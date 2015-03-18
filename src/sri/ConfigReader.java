@@ -24,6 +24,7 @@ public class ConfigReader {
     private String stringDirColEnStem = null;
     private String stringDirColEnSer = null;
     private String stringDirDictionary = null;
+    private String stringFrequencyIndex = null;
     private String stringWeightIndex = null;
 
     private ConfigReader(String stringConfData) {
@@ -89,6 +90,9 @@ public class ConfigReader {
                         case "stringDirDictionary":
                             stringDirDictionary = valor;
                             break;
+                        case "stringFrequencyIndex":
+                            stringFrequencyIndex = valor;
+                            break;
                         case "stringWeightIndex":
                             stringWeightIndex = valor;
                             break;
@@ -125,7 +129,7 @@ public class ConfigReader {
                 || stringDirColEn == null || stringDirColEnN == null
                 || stringDirColEnStop == null || stringDirColEnStem == null
                 || stringDirColEnSer == null || stringDirDictionary == null
-                || stringWeightIndex == null) {
+                || stringFrequencyIndex == null || stringWeightIndex == null) {
             System.out.println("Config file syntax is wrong. SRI can't load correctly.");
             return true;
         }
@@ -170,6 +174,10 @@ public class ConfigReader {
 
     public String getStringDirDictionary() {
         return stringDirDictionary;
+    }
+
+    public String getStringFrequencyIndex() {
+        return stringFrequencyIndex;
     }
 
     public String getStringWeightIndex() {
