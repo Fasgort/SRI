@@ -107,11 +107,22 @@ public class DataManager {
     }
 
     public boolean checksumFile(int idFile, long checksum) {
-        return fileDictionary.search(idFile).getChecksum() == checksum;
+        IndexedFile iF = fileDictionary.search(idFile);
+        iF.doesExist();
+        return iF.getChecksum() == checksum;
     }
 
     public void updateChecksumFile(int idFile, long checksum) {
-        fileDictionary.search(idFile).setChecksum(checksum);
+        IndexedFile iF = fileDictionary.search(idFile);
+        iF.setChecksum(checksum);
+        iF.setModified(true);
+        frequencyIndex.viewColumn(idFile).assign(0);
+        weightIndex.viewColumn(idFile).assign(0.0);
+    }
+
+    public void ignoreFile(int idFile) {
+        IndexedFile iF = fileDictionary.search(idFile);
+        iF.doesNotExist();
     }
 
     public void addFrequency(int idWord, int idFile) {
@@ -123,9 +134,34 @@ public class DataManager {
     }
 
     public void generateIndex() {
+        ConfigReader configReader = ConfigReader.getInstance();
         int numberDocuments = fileDictionary.size();
         Iterator<IndexedWord> itw;
         Iterator<IndexedFile> itf;
+
+        // Clean removed files
+        itf = fileDictionary.iterator();
+        while (itf.hasNext()) {
+            IndexedFile iF = itf.next();
+            if (iF.exists() == false && iF.getChecksum() != -1) {
+                // Clean index values related to the file
+                frequencyIndex.viewColumn(iF.getID()).assign(0);
+                weightIndex.viewColumn(iF.getID()).assign(0.0);
+                iF.setChecksum(-1);
+                iF.setModified(true); // Needed to refresh word data
+
+                // Clean old files
+                File deletedFile;
+                deletedFile = new File(configReader.getStringDirColEnN() + iF.getFile().replace(".html", ".txt"));
+                deletedFile.deleteOnExit();
+                deletedFile = new File(configReader.getStringDirColEnStop() + iF.getFile().replace(".html", ".txt"));
+                deletedFile.deleteOnExit();
+                deletedFile = new File(configReader.getStringDirColEnStem() + iF.getFile().replace(".html", ".txt"));
+                deletedFile.deleteOnExit();
+                deletedFile = new File(configReader.getStringDirColEnSer() + iF.getFile().replace(".html", ".ser"));
+                deletedFile.deleteOnExit();
+            }
+        }
 
         // Generate IDF
         itw = wordDictionary.iterator();
@@ -139,10 +175,15 @@ public class DataManager {
         itf = fileDictionary.iterator();
         while (itf.hasNext()) {
             IndexedFile iF = itf.next();
+            if (iF.isModified() == false) {
+                continue;
+            }
             itw = wordDictionary.iterator();
             double normFile = 0.0;
             while (itw.hasNext()) {
                 IndexedWord iW = itw.next();
+                int documentsWithWord = frequencyIndex.viewRow(iW.getID()).cardinality();
+                iW.setIDF(log((double) numberDocuments / (double) documentsWithWord));
                 double fileFrequency = frequencyIndex.getQuick(iW.getID(), iF.getID());
                 double weight = fileFrequency * iW.getIDF();
                 normFile += pow(weight, 2);
@@ -158,28 +199,28 @@ public class DataManager {
             }
         }
 
-        try {
-            ConfigReader configReader = ConfigReader.getInstance();
+        if ("true".equals(configReader.getSerialize())) {
 
-            FileOutputStream fos = new FileOutputStream(configReader.getStringFrequencyIndex());
-            try (ObjectOutputStream oos = new ObjectOutputStream(fos)) {
-                frequencyIndex.trimToSize();
-                oos.writeObject(frequencyIndex);
+            try {
+                FileOutputStream fos = new FileOutputStream(configReader.getStringFrequencyIndex());
+                try (ObjectOutputStream oos = new ObjectOutputStream(fos)) {
+                    frequencyIndex.trimToSize();
+                    oos.writeObject(frequencyIndex);
+                }
+            } catch (Exception e) {
+                System.out.println("Failed serializing weight table.");
             }
-        } catch (Exception e) {
-            System.out.println("Failed serializing weight table.");
-        }
 
-        try {
-            ConfigReader configReader = ConfigReader.getInstance();
-
-            FileOutputStream fos = new FileOutputStream(configReader.getStringWeightIndex());
-            try (ObjectOutputStream oos = new ObjectOutputStream(fos)) {
-                weightIndex.trimToSize();
-                oos.writeObject(weightIndex);
+            try {
+                FileOutputStream fos = new FileOutputStream(configReader.getStringWeightIndex());
+                try (ObjectOutputStream oos = new ObjectOutputStream(fos)) {
+                    weightIndex.trimToSize();
+                    oos.writeObject(weightIndex);
+                }
+            } catch (Exception e) {
+                System.out.println("Failed serializing weight table.");
             }
-        } catch (Exception e) {
-            System.out.println("Failed serializing weight table.");
+
         }
 
     }

@@ -27,7 +27,6 @@ public class FileDictionary {
         Map<String, Integer> _files = null;
 
         File dirDictionary = new File(configReader.getStringDirDictionary());
-        dirDictionary.mkdir();
         File serDictionary = new File(configReader.getStringDirDictionary() + "fileDictionary.ser");
         if (serDictionary.canRead()) {
             try {
@@ -68,10 +67,6 @@ public class FileDictionary {
         return instance;
     }
 
-    protected ArrayList<IndexedFile> accessDictionary() {
-        return fileIDs;
-    }
-
     protected int search(String file) {
         Integer idWord = files.get(file);
         if (idWord == null) {
@@ -109,7 +104,17 @@ public class FileDictionary {
     }
 
     protected int size() {
-        return fileIDs.size();
+        int count = 0;
+        Iterator<IndexedFile> itf = fileIDs.iterator();
+
+        while (itf.hasNext()) {
+            IndexedFile iF = itf.next();
+            if (iF.exists()) {
+                count++;
+            }
+        }
+
+        return count;
     }
 
     protected Iterator<IndexedFile> iterator() {

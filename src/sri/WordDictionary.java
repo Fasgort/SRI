@@ -27,7 +27,6 @@ public class WordDictionary {
         Map<String, Integer> _words = null;
 
         File dirDictionary = new File(configReader.getStringDirDictionary());
-        dirDictionary.mkdir();
         File serDictionary = new File(configReader.getStringDirDictionary() + "wordDictionary.ser");
         if (serDictionary.canRead()) {
             try {
