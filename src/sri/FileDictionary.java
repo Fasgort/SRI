@@ -19,6 +19,7 @@ public class FileDictionary {
     private static FileDictionary instance = null;
     final private ArrayList<IndexedFile> fileIDs; // File Dictionary ID -> file
     final private Map<String, Integer> files; // File Dictionary file -> ID
+    transient private boolean dirty = false;
 
     private FileDictionary() {
         ConfigReader configReader = ConfigReader.getInstance();
@@ -26,7 +27,6 @@ public class FileDictionary {
         ArrayList<IndexedFile> _fileIDs = null;
         Map<String, Integer> _files = null;
 
-        File dirDictionary = new File(configReader.getStringDirDictionary());
         File serDictionary = new File(configReader.getStringDirDictionary() + "fileDictionary.ser");
         if (serDictionary.canRead()) {
             try {
@@ -84,6 +84,7 @@ public class FileDictionary {
     }
 
     protected int add(IndexedFile newFile) {
+        dirty = true;
         int idFile = newFile.getID();
         files.put(newFile.getFile(), idFile);
         fileIDs.add(idFile, newFile);
@@ -91,15 +92,17 @@ public class FileDictionary {
     }
 
     protected void saveDictionary(String stringDirDictionary) {
-        try {
-            File dirDictionary = new File(stringDirDictionary);
-            dirDictionary.mkdir();
-            FileOutputStream fos = new FileOutputStream(stringDirDictionary + "fileDictionary.ser");
-            try (ObjectOutputStream oos = new ObjectOutputStream(fos)) {
-                oos.writeObject(fileIDs);
+        if (dirty) {
+            try {
+                File dirDictionary = new File(stringDirDictionary);
+                dirDictionary.mkdir();
+                FileOutputStream fos = new FileOutputStream(stringDirDictionary + "fileDictionary.ser");
+                try (ObjectOutputStream oos = new ObjectOutputStream(fos)) {
+                    oos.writeObject(fileIDs);
+                }
+            } catch (Exception e) {
+                System.out.println("Failed serializing file dictionary.");
             }
-        } catch (Exception e) {
-            System.out.println("Failed serializing file dictionary.");
         }
     }
 

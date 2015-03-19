@@ -13,7 +13,7 @@ public class IndexedFile implements Comparable<IndexedFile>, Serializable {
     final private String file;
     final private int idFile;
     private long checksum = -1;
-    private double norm = 0.0;
+    private float norm = 0F;
     transient private boolean exists = false;
     transient private boolean modified = false;
 
@@ -44,11 +44,11 @@ public class IndexedFile implements Comparable<IndexedFile>, Serializable {
         return checksum;
     }
 
-    protected void setNorm(double _norm) {
+    protected void setNorm(float _norm) {
         norm = _norm;
     }
 
-    protected double getNorm() {
+    protected float getNorm() {
         return norm;
     }
 

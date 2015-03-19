@@ -10,6 +10,7 @@ import java.io.ObjectOutputStream;
 import java.util.ArrayList;
 import java.util.HashSet;
 import java.util.Set;
+import java.util.regex.Pattern;
 import java.util.zip.Adler32;
 import java.util.zip.Checksum;
 
@@ -37,9 +38,9 @@ public class SRI_Indexer {
             if (dirSerFiles.isDirectory()) {
                 File[] arraySerFiles = dirSerFiles.listFiles();
                 for (File serFile : arraySerFiles) {
-                    serFile.deleteOnExit();
+                    serFile.delete();
                 }
-                dirSerFiles.deleteOnExit();
+                dirSerFiles.delete();
             }
 
             // Borramos los diccionarios
@@ -48,17 +49,17 @@ public class SRI_Indexer {
                 File[] arrayDicFiles = dirDicFiles.listFiles();
                 if (arrayDicFiles.length > 0) {
                     for (File dicFile : arrayDicFiles) {
-                        dicFile.deleteOnExit();
+                        dicFile.delete();
                     }
                 }
-                dirDicFiles.deleteOnExit();
+                dirDicFiles.delete();
             }
 
             // Borramos los índices
             File frequencyIndex = new File(configReader.getStringFrequencyIndex());
-            frequencyIndex.deleteOnExit();
+            frequencyIndex.delete();
             File weightIndex = new File(configReader.getStringWeightIndex());
-            weightIndex.deleteOnExit();
+            weightIndex.delete();
         }
 
         int numWords = 0;
@@ -86,8 +87,13 @@ public class SRI_Indexer {
         // Filtrado HTML
         for (File HTMLFile : arrayHTMLFiles) {
 
-            ArrayList<String> tokenList;
             String file = HTMLFile.getName();
+
+            if (!Pattern.matches(".*[.][hH][tT][mM][lL]", file)) {
+                continue;
+            }
+
+            ArrayList<String> tokenList;
             Integer idFile = dataManager.searchFile(file);
             boolean skip = false;
             Checksum checksum;
@@ -140,7 +146,10 @@ public class SRI_Indexer {
                     dataManager.ignoreFile(idFile);
                     if ("true".equals(configReader.getDebug())) {
                         System.out.println("File " + file + " was ignored and won't be included in the SE.");
+                        System.out.println("Renamed to " + file + ".nocontent");
                     }
+                    File ignored = new File(configReader.getStringDirColEn() + file + ".nocontent");
+                    HTMLFile.renameTo(ignored);
                     continue;
                 }
 

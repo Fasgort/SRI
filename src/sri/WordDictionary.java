@@ -19,6 +19,7 @@ public class WordDictionary {
     private static WordDictionary instance = null;
     final private ArrayList<IndexedWord> wordIDs; // File Dictionary ID -> word
     final private Map<String, Integer> words; // File Dictionary word -> ID
+    private transient boolean dirty = false;
 
     private WordDictionary() {
         ConfigReader configReader = ConfigReader.getInstance();
@@ -26,7 +27,6 @@ public class WordDictionary {
         ArrayList<IndexedWord> _wordIDs = null;
         Map<String, Integer> _words = null;
 
-        File dirDictionary = new File(configReader.getStringDirDictionary());
         File serDictionary = new File(configReader.getStringDirDictionary() + "wordDictionary.ser");
         if (serDictionary.canRead()) {
             try {
@@ -89,6 +89,7 @@ public class WordDictionary {
     }
 
     protected int add(IndexedWord newWord) {
+        dirty = true;
         int idWord = newWord.getID();
         words.put(newWord.getWord(), idWord);
         wordIDs.add(idWord, newWord);
@@ -104,15 +105,17 @@ public class WordDictionary {
     }
 
     protected void saveDictionary(String stringDirDictionary) {
-        try {
-            File dirDictionary = new File(stringDirDictionary);
-            dirDictionary.mkdir();
-            FileOutputStream fos = new FileOutputStream(stringDirDictionary + "wordDictionary.ser");
-            try (ObjectOutputStream oos = new ObjectOutputStream(fos)) {
-                oos.writeObject(wordIDs);
+        if (dirty) {
+            try {
+                File dirDictionary = new File(stringDirDictionary);
+                dirDictionary.mkdir();
+                FileOutputStream fos = new FileOutputStream(stringDirDictionary + "wordDictionary.ser");
+                try (ObjectOutputStream oos = new ObjectOutputStream(fos)) {
+                    oos.writeObject(wordIDs);
+                }
+            } catch (Exception e) {
+                System.out.println("Failed serializing word dictionary.");
             }
-        } catch (Exception e) {
-            System.out.println("Failed serializing word dictionary.");
         }
     }
 

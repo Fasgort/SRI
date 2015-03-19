@@ -1,6 +1,6 @@
 package sri;
 
-import cern.colt.matrix.tdouble.impl.SparseDoubleMatrix2D;
+import cern.colt.matrix.tfloat.impl.SparseFloatMatrix2D;
 import cern.colt.matrix.tint.impl.SparseIntMatrix2D;
 import java.io.File;
 import java.io.FileInputStream;
@@ -24,7 +24,7 @@ public class DataManager {
     final private FileDictionary fileDictionary;
     final private WordDictionary wordDictionary;
     SparseIntMatrix2D frequencyIndex;
-    SparseDoubleMatrix2D weightIndex;
+    SparseFloatMatrix2D weightIndex;
 
     protected DataManager() {
         ConfigReader configReader = ConfigReader.getInstance();
@@ -33,7 +33,7 @@ public class DataManager {
         wordDictionary = WordDictionary.getInstance();
 
         SparseIntMatrix2D _frequencyIndex = null;
-        SparseDoubleMatrix2D _weightIndex = null;
+        SparseFloatMatrix2D _weightIndex = null;
 
         File serFrequency = new File(configReader.getStringFrequencyIndex());
         if (serFrequency.canRead()) {
@@ -52,7 +52,7 @@ public class DataManager {
             try {
                 FileInputStream fis = new FileInputStream(serWeight);
                 try (ObjectInputStream ois = new ObjectInputStream(fis)) {
-                    _weightIndex = (SparseDoubleMatrix2D) ois.readObject();
+                    _weightIndex = (SparseFloatMatrix2D) ois.readObject();
                 }
             } catch (Exception e) {
                 System.out.println("Failed loading serialized weight index.");
@@ -66,7 +66,7 @@ public class DataManager {
         }
 
         if (_weightIndex == null) {
-            weightIndex = new SparseDoubleMatrix2D(7500, 300);
+            weightIndex = new SparseFloatMatrix2D(7500, 300);
         } else {
             weightIndex = _weightIndex;
         }
@@ -117,7 +117,7 @@ public class DataManager {
         iF.setChecksum(checksum);
         iF.setModified(true);
         frequencyIndex.viewColumn(idFile).assign(0);
-        weightIndex.viewColumn(idFile).assign(0.0);
+        weightIndex.viewColumn(idFile).assign(0F);
     }
 
     public void ignoreFile(int idFile) {
@@ -159,7 +159,7 @@ public class DataManager {
                     }
                 }
                 frequencyIndex.viewColumn(iF.getID()).assign(0);
-                weightIndex.viewColumn(iF.getID()).assign(0.0);
+                weightIndex.viewColumn(iF.getID()).assign(0F);
                 iF.setChecksum(-1);
                 iF.setModified(true); // Needed to refresh word data
 
@@ -176,42 +176,46 @@ public class DataManager {
             }
         }
 
+        boolean indexModified = false;
+
         // Generate IDF & Weight
         itf = fileDictionary.iterator();
         while (itf.hasNext()) {
             IndexedFile iF = itf.next();
-            if (iF.isModified() == false) {
+            if (!iF.isModified()) {
                 continue;
             }
+            indexModified = true;
             itw = wordDictionary.iterator();
-            double normFile = 0.0;
+            int maxFrequency = frequencyIndex.viewColumn(iF.getID()).getMaxLocation()[0];
+            float normFile = 0F;
             while (itw.hasNext()) {
                 IndexedWord iW = itw.next();
                 int documentsWithWord = iW.getDocumentCount();
                 if (documentsWithWord == 0) {
-                    iW.setIDF(0.0);
+                    iW.setIDF(0F);
                 } else {
-                    iW.setIDF(log((double) numberDocuments / (double) documentsWithWord));
+                    iW.setIDF((float) log((float) numberDocuments / (float) documentsWithWord));
                 }
-                double fileFrequency = frequencyIndex.getQuick(iW.getID(), iF.getID());
-                double weight = fileFrequency * iW.getIDF();
+                float fileFrequency = frequencyIndex.getQuick(iW.getID(), iF.getID()) / (float) maxFrequency;
+                float weight = fileFrequency * iW.getIDF();
                 normFile += pow(weight, 2);
                 weightIndex.setQuick(iW.getID(), iF.getID(), weight);
             }
-            normFile = sqrt(normFile);
+            normFile = (float) sqrt(normFile);
             iF.setNorm(normFile);
             itw = wordDictionary.iterator();
             while (itw.hasNext()) {
                 IndexedWord iW = itw.next();
-                double weight = weightIndex.getQuick(iW.getID(), iF.getID());
-                if (weight != 0.0) {
-                    double normWeight = weight / normFile;
+                float weight = weightIndex.getQuick(iW.getID(), iF.getID());
+                if (weight != 0F) {
+                    float normWeight = weight / normFile;
                     weightIndex.setQuick(iW.getID(), iF.getID(), normWeight);
                 }
             }
         }
 
-        if ("true".equals(configReader.getSerialize())) {
+        if ("true".equals(configReader.getSerialize()) && indexModified) {
 
             try {
                 FileOutputStream fos = new FileOutputStream(configReader.getStringFrequencyIndex());
@@ -249,7 +253,7 @@ public class DataManager {
         int minFrequency = 0;
         while (itw.hasNext()) {
             IndexedWord wordA = itw.next();
-            int wordAFrequency = frequencyIndex.viewRow(wordA.getID()).zSum(); // INEFICIENTE
+            int wordAFrequency = frequencyIndex.viewRow(wordA.getID()).zSum();
             if (wordAFrequency > minFrequency || list.size() < sizeList) {
                 if (list.size() == 0) {
                     list.add(new Pair(wordA, wordAFrequency));
