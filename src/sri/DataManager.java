@@ -126,7 +126,12 @@ public class DataManager {
     }
 
     public void addFrequency(int idWord, int idFile) {
-        frequencyIndex.setQuick(idWord, idFile, frequencyIndex.getQuick(idWord, idFile) + 1);
+        int count = frequencyIndex.getQuick(idWord, idFile);
+        if (count == 0) {
+            IndexedWord iW = wordDictionary.search(idWord);
+            iW.addDocumentCount();
+        }
+        frequencyIndex.setQuick(idWord, idFile, count + 1);
     }
 
     public int getFrequency(int idWord, int idFile) {
@@ -145,6 +150,14 @@ public class DataManager {
             IndexedFile iF = itf.next();
             if (iF.exists() == false && iF.getChecksum() != -1) {
                 // Clean index values related to the file
+                itw = wordDictionary.iterator();
+                while (itw.hasNext()) {
+                    IndexedWord iW = itw.next();
+                    int idWord = iW.getID();
+                    if (frequencyIndex.getQuick(idWord, iF.getID()) != 0) {
+                        iW.subDocumentCount();
+                    }
+                }
                 frequencyIndex.viewColumn(iF.getID()).assign(0);
                 weightIndex.viewColumn(iF.getID()).assign(0.0);
                 iF.setChecksum(-1);
@@ -172,7 +185,6 @@ public class DataManager {
         }
 
         // Generate Weight
-        long time = 0;
         itf = fileDictionary.iterator();
         while (itf.hasNext()) {
             IndexedFile iF = itf.next();
@@ -183,9 +195,7 @@ public class DataManager {
             double normFile = 0.0;
             while (itw.hasNext()) {
                 IndexedWord iW = itw.next();
-                long one = System.currentTimeMillis();
-                int documentsWithWord = frequencyIndex.viewRow(iW.getID()).cardinality(); // PROBLEMA DE RENDIMIENTO
-                time += System.currentTimeMillis() - one;
+                int documentsWithWord = iW.getDocumentCount();
                 iW.setIDF(log((double) numberDocuments / (double) documentsWithWord));
                 double fileFrequency = frequencyIndex.getQuick(iW.getID(), iF.getID());
                 double weight = fileFrequency * iW.getIDF();
@@ -201,8 +211,6 @@ public class DataManager {
                 weightIndex.setQuick(iW.getID(), iF.getID(), normWeight);
             }
         }
-
-        System.out.println(time);
 
         if ("true".equals(configReader.getSerialize())) {
 

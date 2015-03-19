@@ -13,11 +13,13 @@ public class IndexedWord implements Comparable<IndexedWord>, Serializable {
     final private String word;
     final private int idWord;
     private double idf;
+    private int documentCount;
 
     protected IndexedWord(String _word) {
         word = _word;
         idWord = idNext++;
         idf = 0.0;
+        documentCount = 0;
     }
 
     protected static void setNextID(int _idNext) {
@@ -38,6 +40,18 @@ public class IndexedWord implements Comparable<IndexedWord>, Serializable {
 
     protected double getIDF() {
         return idf;
+    }
+    
+    protected void addDocumentCount() {
+        documentCount++;
+    }
+    
+    protected void subDocumentCount() {
+        documentCount--;
+    }
+
+    public int getDocumentCount() {
+        return documentCount;
     }
 
     @Override
