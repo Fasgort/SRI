@@ -172,6 +172,7 @@ public class DataManager {
         }
 
         // Generate Weight
+        long time = 0;
         itf = fileDictionary.iterator();
         while (itf.hasNext()) {
             IndexedFile iF = itf.next();
@@ -182,7 +183,9 @@ public class DataManager {
             double normFile = 0.0;
             while (itw.hasNext()) {
                 IndexedWord iW = itw.next();
-                int documentsWithWord = frequencyIndex.viewRow(iW.getID()).cardinality();
+                long one = System.currentTimeMillis();
+                int documentsWithWord = frequencyIndex.viewRow(iW.getID()).cardinality(); // PROBLEMA DE RENDIMIENTO
+                time += System.currentTimeMillis() - one;
                 iW.setIDF(log((double) numberDocuments / (double) documentsWithWord));
                 double fileFrequency = frequencyIndex.getQuick(iW.getID(), iF.getID());
                 double weight = fileFrequency * iW.getIDF();
@@ -198,6 +201,8 @@ public class DataManager {
                 weightIndex.setQuick(iW.getID(), iF.getID(), normWeight);
             }
         }
+
+        System.out.println(time);
 
         if ("true".equals(configReader.getSerialize())) {
 

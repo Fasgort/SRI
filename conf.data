@@ -1,5 +1,5 @@
 debug = false
-serialize = true
+serialize = false
 dirResources = ./resources/
 stopWordFilename = englishST.txt
 stringDirColEn = ./coleccionEn/
