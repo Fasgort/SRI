@@ -209,6 +209,25 @@ public class SRI_Indexer {
                         FileOutputStream fos = new FileOutputStream(configReader.getStringDirColEnSer() + file.replace(".html", ".ser"));
                         try (ObjectOutputStream oos = new ObjectOutputStream(fos)) {
                             oos.writeObject(tokenList);
+                            if (dataManager.checksumFile(idFile, -1)) {
+                                if ("true".equals(configReader.getDebug())) {
+                                    System.out.println("File " + file + " was serialized by first time.");
+                                }
+                                try (InputStream fis = new FileInputStream(configReader.getStringDirColEn() + file)) {
+                                    byte[] buffer = new byte[1024];
+                                    checksum = new Adler32();
+                                    int numRead;
+                                    do {
+                                        numRead = fis.read(buffer);
+                                        if (numRead > 0) {
+                                            checksum.update(buffer, 0, numRead);
+                                        }
+                                    } while (numRead != -1);
+                                    dataManager.updateChecksumFile(idFile, checksum.getValue());
+                                } catch (Exception e) {
+                                    System.out.println("Checksum failed.");
+                                }
+                            }
                         }
                     } catch (Exception e) {
                         System.out.println("Failed serializing stemmed file " + file);
