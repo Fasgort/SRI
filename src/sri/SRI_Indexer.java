@@ -80,12 +80,6 @@ public class SRI_Indexer {
         //Lectura de ficheros
         File[] arrayHTMLFiles = dirHTML.listFiles();
 
-        // No existen ficheros en el directorio
-        if (arrayHTMLFiles.length == 0) {
-            System.out.println("No files to filter. Exiting program.");
-            return;
-        }
-
         // Inicio de operaciones
         long start = System.currentTimeMillis();
 

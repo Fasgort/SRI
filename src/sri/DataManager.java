@@ -176,15 +176,7 @@ public class DataManager {
             }
         }
 
-        // Generate IDF
-        itw = wordDictionary.iterator();
-        while (itw.hasNext()) {
-            IndexedWord iW = itw.next();
-            int documentsWithWord = frequencyIndex.viewRow(iW.getID()).cardinality();
-            iW.setIDF(log((double) numberDocuments / (double) documentsWithWord));
-        }
-
-        // Generate Weight
+        // Generate IDF & Weight
         itf = fileDictionary.iterator();
         while (itf.hasNext()) {
             IndexedFile iF = itf.next();
@@ -196,7 +188,11 @@ public class DataManager {
             while (itw.hasNext()) {
                 IndexedWord iW = itw.next();
                 int documentsWithWord = iW.getDocumentCount();
-                iW.setIDF(log((double) numberDocuments / (double) documentsWithWord));
+                if (documentsWithWord == 0) {
+                    iW.setIDF(0.0);
+                } else {
+                    iW.setIDF(log((double) numberDocuments / (double) documentsWithWord));
+                }
                 double fileFrequency = frequencyIndex.getQuick(iW.getID(), iF.getID());
                 double weight = fileFrequency * iW.getIDF();
                 normFile += pow(weight, 2);
@@ -207,8 +203,11 @@ public class DataManager {
             itw = wordDictionary.iterator();
             while (itw.hasNext()) {
                 IndexedWord iW = itw.next();
-                double normWeight = weightIndex.getQuick(iW.getID(), iF.getID()) / normFile;
-                weightIndex.setQuick(iW.getID(), iF.getID(), normWeight);
+                double weight = weightIndex.getQuick(iW.getID(), iF.getID());
+                if (weight != 0.0) {
+                    double normWeight = weight / normFile;
+                    weightIndex.setQuick(iW.getID(), iF.getID(), normWeight);
+                }
             }
         }
 
