@@ -149,6 +149,9 @@ public class DataManager {
         while (itf.hasNext()) {
             IndexedFile iF = itf.next();
             if (iF.exists() == false && iF.getChecksum() != -1) {
+                // File Dictionary must be refreshed
+                fileDictionary.setDirty();
+
                 // Clean index values related to the file
                 itw = wordDictionary.iterator();
                 while (itw.hasNext()) {
@@ -170,8 +173,6 @@ public class DataManager {
                 deletedFile = new File(configReader.getStringDirColEnStop() + iF.getFile().replace(".html", ".txt"));
                 deletedFile.deleteOnExit();
                 deletedFile = new File(configReader.getStringDirColEnStem() + iF.getFile().replace(".html", ".txt"));
-                deletedFile.deleteOnExit();
-                deletedFile = new File(configReader.getStringDirColEnSer() + iF.getFile().replace(".html", ".ser"));
                 deletedFile.deleteOnExit();
             }
         }

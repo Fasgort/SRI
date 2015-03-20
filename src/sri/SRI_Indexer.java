@@ -2,11 +2,8 @@ package sri;
 
 import java.io.File;
 import java.io.FileInputStream;
-import java.io.FileOutputStream;
 import java.io.FileWriter;
 import java.io.InputStream;
-import java.io.ObjectInputStream;
-import java.io.ObjectOutputStream;
 import java.util.ArrayList;
 import java.util.HashSet;
 import java.util.Set;
@@ -33,15 +30,6 @@ public class SRI_Indexer {
 
         // Desactivando y limpiando serializado
         if ("false".equals(configReader.getSerialize())) {
-            // Borramos el directorio de ficheros serializados
-            File dirSerFiles = new File(configReader.getStringDirColEnSer());
-            if (dirSerFiles.isDirectory()) {
-                File[] arraySerFiles = dirSerFiles.listFiles();
-                for (File serFile : arraySerFiles) {
-                    serFile.delete();
-                }
-                dirSerFiles.delete();
-            }
 
             // Borramos los diccionarios
             File dirDicFiles = new File(configReader.getStringDirDictionary());
@@ -95,13 +83,11 @@ public class SRI_Indexer {
 
             ArrayList<String> tokenList;
             Integer idFile = dataManager.searchFile(file);
-            boolean skip = false;
             Checksum checksum;
             boolean modified = false;
 
             // Generar checksum
-            File serializedFile = new File(configReader.getStringDirColEnSer() + file.replace(".html", ".ser"));
-            if (serializedFile.canRead() && "true".equals(configReader.getSerialize())) {
+            if ("true".equals(configReader.getSerialize())) {
                 try (InputStream fis = new FileInputStream(configReader.getStringDirColEn() + file)) {
                     byte[] buffer = new byte[1024];
                     checksum = new Adler32();
@@ -126,20 +112,9 @@ public class SRI_Indexer {
                     System.out.println("Checksum failed.");
                 }
 
-                if (!modified) {
-                    try {
-                        FileInputStream fis = new FileInputStream(serializedFile);
-                        try (ObjectInputStream ois = new ObjectInputStream(fis)) {
-                            tokenList = (ArrayList<String>) ois.readObject();
-                            skip = true;
-                        }
-                    } catch (Exception e) {
-                        System.out.println("Failed loading serialized stemmed file " + file);
-                    }
-                }
             }
 
-            if (!skip) {
+            if (modified) {
 
                 String textFiltered = HTMLfilter.filterEN(configReader.getStringDirColEn(), file);
                 if (textFiltered == null) {
@@ -203,38 +178,6 @@ public class SRI_Indexer {
                 tokenList = HTMLfilter.stemmer(tokenList);
                 if (tokenList == null) {
                     continue;
-                }
-
-                if ("true".equals(configReader.getSerialize())) {
-                    File dirSer = new File(configReader.getStringDirColEnSer());
-                    dirSer.mkdir();
-                    try {
-                        FileOutputStream fos = new FileOutputStream(configReader.getStringDirColEnSer() + file.replace(".html", ".ser"));
-                        try (ObjectOutputStream oos = new ObjectOutputStream(fos)) {
-                            oos.writeObject(tokenList);
-                            if (dataManager.checksumFile(idFile, -1)) {
-                                if ("true".equals(configReader.getDebug())) {
-                                    System.out.println("File " + file + " was serialized by first time.");
-                                }
-                                try (InputStream fis = new FileInputStream(configReader.getStringDirColEn() + file)) {
-                                    byte[] buffer = new byte[1024];
-                                    checksum = new Adler32();
-                                    int numRead;
-                                    do {
-                                        numRead = fis.read(buffer);
-                                        if (numRead > 0) {
-                                            checksum.update(buffer, 0, numRead);
-                                        }
-                                    } while (numRead != -1);
-                                    dataManager.updateChecksumFile(idFile, checksum.getValue());
-                                } catch (Exception e) {
-                                    System.out.println("Checksum failed.");
-                                }
-                            }
-                        }
-                    } catch (Exception e) {
-                        System.out.println("Failed serializing stemmed file " + file);
-                    }
                 }
 
                 File dirStem = new File(configReader.getStringDirColEnStem());

@@ -91,6 +91,10 @@ public class FileDictionary {
         return idFile;
     }
 
+    protected void setDirty() {
+        dirty = true;
+    }
+
     protected void saveDictionary(String stringDirDictionary) {
         if (dirty) {
             try {
