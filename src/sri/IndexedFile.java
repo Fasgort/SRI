@@ -11,16 +11,14 @@ public class IndexedFile implements Comparable<IndexedFile>, Serializable {
     private static final long serialVersionUID = -4509962320335592519L;
     private static int idNext = 0;
     final private String file;
-    final private int idFile;
+    private int idFile;
     private long checksum = -1;
     private float norm = 0F;
-    transient private boolean exists = false;
     transient private boolean modified = false;
 
     protected IndexedFile(String _file) {
         file = _file;
         idFile = idNext++;
-        exists = true;
         modified = true;
     }
 
@@ -34,6 +32,10 @@ public class IndexedFile implements Comparable<IndexedFile>, Serializable {
 
     protected int getID() {
         return idFile;
+    }
+
+    protected void setID(int _idFile) {
+        idFile = _idFile;
     }
 
     protected void setChecksum(long _checksum) {
@@ -50,18 +52,6 @@ public class IndexedFile implements Comparable<IndexedFile>, Serializable {
 
     protected float getNorm() {
         return norm;
-    }
-
-    public void doesExist() {
-        exists = true;
-    }
-
-    public void doesNotExist() {
-        exists = false;
-    }
-
-    public boolean exists() {
-        return exists;
     }
 
     public boolean isModified() {

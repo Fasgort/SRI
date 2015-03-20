@@ -1,6 +1,8 @@
 package sri;
 
+import cern.colt.matrix.tfloat.impl.SparseFloatMatrix1D;
 import cern.colt.matrix.tfloat.impl.SparseFloatMatrix2D;
+import cern.colt.matrix.tint.impl.SparseIntMatrix1D;
 import cern.colt.matrix.tint.impl.SparseIntMatrix2D;
 import java.io.File;
 import java.io.FileInputStream;
@@ -10,6 +12,7 @@ import java.io.ObjectOutputStream;
 import static java.lang.StrictMath.log;
 import static java.lang.StrictMath.pow;
 import static java.lang.StrictMath.sqrt;
+import java.util.BitSet;
 import java.util.Iterator;
 import java.util.LinkedList;
 import javafx.util.Pair;
@@ -108,7 +111,7 @@ public class DataManager {
 
     public boolean checksumFile(int idFile, long checksum) {
         IndexedFile iF = fileDictionary.search(idFile);
-        iF.doesExist();
+        fileDictionary.doesExist(idFile);
         return iF.getChecksum() == checksum;
     }
 
@@ -121,8 +124,7 @@ public class DataManager {
     }
 
     public void ignoreFile(int idFile) {
-        IndexedFile iF = fileDictionary.search(idFile);
-        iF.doesNotExist();
+        fileDictionary.doesNotExist(idFile);
     }
 
     public void addFrequency(int idWord, int idFile) {
@@ -138,45 +140,88 @@ public class DataManager {
         return frequencyIndex.getQuick(idWord, idFile);
     }
 
+    private void trimDictionary() {
+
+        BitSet existence = fileDictionary.getExistence();
+        int existence_last = fileDictionary.getExistence_end();
+
+        BitSet updatedExistence = new BitSet(fileDictionary.size());
+        int updated_last = fileDictionary.size();
+
+        updatedExistence.flip(0, existence_last);
+        updatedExistence.and(existence);
+        updatedExistence.flip(existence_last, updated_last);
+
+        int lastOne = updatedExistence.previousSetBit(updated_last - 1);
+        int nextOne = updatedExistence.nextClearBit(0);
+
+        while (nextOne < lastOne) {
+
+            SparseIntMatrix1D frequencySwap = new SparseIntMatrix1D(frequencyIndex.viewColumn(nextOne).toArray());
+            SparseFloatMatrix1D weightSwap = new SparseFloatMatrix1D(weightIndex.viewColumn(nextOne).toArray());
+
+            frequencyIndex.viewColumn(nextOne).assign(frequencyIndex.viewColumn(lastOne));
+            weightIndex.viewColumn(nextOne).assign(weightIndex.viewColumn(lastOne));
+
+            frequencyIndex.viewColumn(lastOne).assign(frequencySwap);
+            weightIndex.viewColumn(lastOne).assign(weightSwap);
+
+            fileDictionary.move(lastOne, nextOne);
+            updatedExistence.set(nextOne);
+            updatedExistence.clear(lastOne);
+            lastOne = updatedExistence.previousSetBit(updated_last - 1);
+            nextOne = updatedExistence.nextClearBit(0);
+
+        }
+
+        fileDictionary.setExistence(updatedExistence);
+
+    }
+
     public void generateIndex() {
         ConfigReader configReader = ConfigReader.getInstance();
-        int numberDocuments = fileDictionary.size();
         Iterator<IndexedWord> itw;
         Iterator<IndexedFile> itf;
 
+        trimDictionary();
+
         // Clean removed files
-        itf = fileDictionary.iterator();
-        while (itf.hasNext()) {
-            IndexedFile iF = itf.next();
-            if (iF.exists() == false && iF.getChecksum() != -1) {
-                // File Dictionary must be refreshed
-                fileDictionary.setDirty();
+        BitSet existence = fileDictionary.getExistence();
+        int fileID;
+        int count = 0;
+        while ((fileID = existence.previousClearBit(fileDictionary.size() - 1 - count)) != -1) {
+            count++;
+            IndexedFile iF = fileDictionary.search(fileID);
 
-                // Clean index values related to the file
-                itw = wordDictionary.iterator();
-                while (itw.hasNext()) {
-                    IndexedWord iW = itw.next();
-                    int idWord = iW.getID();
-                    if (frequencyIndex.getQuick(idWord, iF.getID()) != 0) {
-                        iW.subDocumentCount();
-                    }
+            // File Dictionary must be refreshed
+            fileDictionary.setDirty();
+
+            // Clean index values related to the file
+            itw = wordDictionary.iterator();
+            while (itw.hasNext()) {
+                IndexedWord iW = itw.next();
+                int idWord = iW.getID();
+                if (frequencyIndex.getQuick(idWord, iF.getID()) != 0) {
+                    iW.subDocumentCount();
                 }
-                frequencyIndex.viewColumn(iF.getID()).assign(0);
-                weightIndex.viewColumn(iF.getID()).assign(0F);
-                iF.setChecksum(-1);
-                iF.setModified(true); // Needed to refresh word data
-
-                // Clean old files
-                File deletedFile;
-                deletedFile = new File(configReader.getStringDirColEnN() + iF.getFile().replace(".html", ".txt"));
-                deletedFile.deleteOnExit();
-                deletedFile = new File(configReader.getStringDirColEnStop() + iF.getFile().replace(".html", ".txt"));
-                deletedFile.deleteOnExit();
-                deletedFile = new File(configReader.getStringDirColEnStem() + iF.getFile().replace(".html", ".txt"));
-                deletedFile.deleteOnExit();
             }
+            frequencyIndex.viewColumn(iF.getID()).assign(0);
+            weightIndex.viewColumn(iF.getID()).assign(0F);
+
+            // Clean old files
+            File deletedFile;
+            deletedFile = new File(configReader.getStringDirColEnN() + iF.getFile().replace(".html", ".txt"));
+            deletedFile.deleteOnExit();
+            deletedFile = new File(configReader.getStringDirColEnStop() + iF.getFile().replace(".html", ".txt"));
+            deletedFile.deleteOnExit();
+            deletedFile = new File(configReader.getStringDirColEnStem() + iF.getFile().replace(".html", ".txt"));
+            deletedFile.deleteOnExit();
+
         }
 
+        fileDictionary.cleanDictionary();
+
+        int numberDocuments = fileDictionary.existingDocuments();
         boolean indexModified = false;
 
         // Generate IDF & Weight
@@ -218,26 +263,29 @@ public class DataManager {
 
         if ("true".equals(configReader.getSerialize()) && indexModified) {
 
+            File indexDir = new File(configReader.getStringDirIndex());
+            indexDir.mkdir();
+
             try {
-                File frequencyFile = new File(configReader.getStringDirIndex() + configReader.getStringFrequencyIndex());
-                FileOutputStream fos = new FileOutputStream(frequencyFile);
+                FileOutputStream fos = new FileOutputStream(configReader.getStringDirIndex() + configReader.getStringFrequencyIndex());
                 try (ObjectOutputStream oos = new ObjectOutputStream(fos)) {
                     frequencyIndex.trimToSize();
                     oos.writeObject(frequencyIndex);
                 }
             } catch (Exception e) {
                 System.out.println("Failed serializing frequency table.");
+
             }
 
             try {
-                File weightFile = new File(configReader.getStringDirIndex() + configReader.getStringWeightIndex());
-                FileOutputStream fos = new FileOutputStream(weightFile);
+                FileOutputStream fos = new FileOutputStream(configReader.getStringDirIndex() + configReader.getStringWeightIndex());
                 try (ObjectOutputStream oos = new ObjectOutputStream(fos)) {
                     weightIndex.trimToSize();
                     oos.writeObject(weightIndex);
                 }
             } catch (Exception e) {
                 System.out.println("Failed serializing weight table.");
+
             }
 
         }

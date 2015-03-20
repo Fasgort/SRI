@@ -6,6 +6,7 @@ import java.io.FileOutputStream;
 import java.io.ObjectInputStream;
 import java.io.ObjectOutputStream;
 import java.util.ArrayList;
+import java.util.BitSet;
 import java.util.HashMap;
 import java.util.Iterator;
 import java.util.Map;
@@ -19,6 +20,8 @@ public class FileDictionary {
     private static FileDictionary instance = null;
     final private ArrayList<IndexedFile> fileIDs; // File Dictionary ID -> file
     final private Map<String, Integer> files; // File Dictionary file -> ID
+    transient private BitSet existence;
+    transient private int existence_end;
     transient private boolean dirty = false;
 
     private FileDictionary() {
@@ -58,6 +61,10 @@ public class FileDictionary {
         } else {
             files = _files;
         }
+
+        existence = new BitSet(fileIDs.size());
+        existence_end = fileIDs.size();
+
     }
 
     protected static FileDictionary getInstance() {
@@ -91,8 +98,59 @@ public class FileDictionary {
         return idFile;
     }
 
+    protected void move(int oldID, int newID) {
+        dirty = true;
+        IndexedFile movedFile = fileIDs.get(oldID);
+        IndexedFile deletedFile = fileIDs.get(newID);
+
+        fileIDs.remove(newID);
+        fileIDs.add(newID, movedFile);
+
+        fileIDs.remove(oldID);
+        fileIDs.add(oldID, deletedFile);
+
+        files.replace(movedFile.getFile(), newID);
+        files.replace(deletedFile.getFile(), oldID);
+
+        movedFile.setID(newID);
+        deletedFile.setID(oldID);
+    }
+
+    protected void delete(int fileID) {
+        String deleted = fileIDs.get(fileID).getFile();
+        files.remove(deleted);
+        fileIDs.remove(fileID);
+    }
+
+    public void doesExist(int idFile) {
+        if (idFile <= existence_end) {
+            existence.set(idFile);
+        }
+    }
+
+    public void doesNotExist(int idFile) {
+        if (idFile <= existence_end) {
+            existence.clear(idFile);
+        }
+    }
+
+    protected boolean exists(int idFile) {
+        if (idFile <= existence_end) {
+            return existence.get(idFile);
+        } else {
+            return true;
+        }
+    }
+
     protected void setDirty() {
         dirty = true;
+    }
+
+    protected void cleanDictionary() {
+        int fileID;
+        while ((fileID = existence.previousClearBit(fileIDs.size() - 1)) != -1) {
+            delete(fileID);
+        }
     }
 
     protected void saveDictionary() {
@@ -112,18 +170,28 @@ public class FileDictionary {
         }
     }
 
+    protected BitSet getExistence() {
+        return existence;
+    }
+
+    protected void setExistence(BitSet _existence) {
+        existence = _existence;
+    }
+
+    public int getExistence_end() {
+        return existence_end;
+    }
+
+    public void setExistence_end(int _existence_end) {
+        existence_end = _existence_end;
+    }
+
     protected int size() {
-        int count = 0;
-        Iterator<IndexedFile> itf = fileIDs.iterator();
+        return fileIDs.size();
+    }
 
-        while (itf.hasNext()) {
-            IndexedFile iF = itf.next();
-            if (iF.exists()) {
-                count++;
-            }
-        }
-
-        return count;
+    protected int existingDocuments() {
+        return existence.cardinality();
     }
 
     protected Iterator<IndexedFile> iterator() {
