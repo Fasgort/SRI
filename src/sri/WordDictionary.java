@@ -27,7 +27,7 @@ public class WordDictionary {
         ArrayList<IndexedWord> _wordIDs = null;
         Map<String, Integer> _words = null;
 
-        File serDictionary = new File(configReader.getStringDirDictionary() + "wordDictionary.ser");
+        File serDictionary = new File(configReader.getStringDirIndex() + configReader.getStringWordDictionary());
         if (serDictionary.canRead()) {
             try {
                 FileInputStream fis = new FileInputStream(serDictionary);
@@ -104,12 +104,14 @@ public class WordDictionary {
         return wordIDs.iterator();
     }
 
-    protected void saveDictionary(String stringDirDictionary) {
+    protected void saveDictionary() {
         if (dirty) {
+            ConfigReader configReader = ConfigReader.getInstance();
+
             try {
-                File dirDictionary = new File(stringDirDictionary);
+                File dirDictionary = new File(configReader.getStringDirIndex());
                 dirDictionary.mkdir();
-                FileOutputStream fos = new FileOutputStream(stringDirDictionary + "wordDictionary.ser");
+                FileOutputStream fos = new FileOutputStream(configReader.getStringDirIndex() + configReader.getStringWordDictionary());
                 try (ObjectOutputStream oos = new ObjectOutputStream(fos)) {
                     oos.writeObject(wordIDs);
                 }

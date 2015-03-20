@@ -27,7 +27,7 @@ public class FileDictionary {
         ArrayList<IndexedFile> _fileIDs = null;
         Map<String, Integer> _files = null;
 
-        File serDictionary = new File(configReader.getStringDirDictionary() + "fileDictionary.ser");
+        File serDictionary = new File(configReader.getStringDirIndex() + configReader.getStringFileDictionary());
         if (serDictionary.canRead()) {
             try {
                 FileInputStream fis = new FileInputStream(serDictionary);
@@ -95,12 +95,14 @@ public class FileDictionary {
         dirty = true;
     }
 
-    protected void saveDictionary(String stringDirDictionary) {
+    protected void saveDictionary() {
         if (dirty) {
+            ConfigReader configReader = ConfigReader.getInstance();
+
             try {
-                File dirDictionary = new File(stringDirDictionary);
+                File dirDictionary = new File(configReader.getStringDirIndex());
                 dirDictionary.mkdir();
-                FileOutputStream fos = new FileOutputStream(stringDirDictionary + "fileDictionary.ser");
+                FileOutputStream fos = new FileOutputStream(configReader.getStringDirIndex() + configReader.getStringFileDictionary());
                 try (ObjectOutputStream oos = new ObjectOutputStream(fos)) {
                     oos.writeObject(fileIDs);
                 }

@@ -22,6 +22,9 @@ public class SRI_Indexer {
      */
     public static void run(String[] args) {
 
+        // Inicio de operaciones
+        long start = System.currentTimeMillis();
+
         // Lectura de configuración
         ConfigReader configReader = ConfigReader.getInstance(args[0]);
         if (configReader.fail()) {
@@ -31,23 +34,18 @@ public class SRI_Indexer {
         // Desactivando y limpiando serializado
         if ("false".equals(configReader.getSerialize())) {
 
-            // Borramos los diccionarios
-            File dirDicFiles = new File(configReader.getStringDirDictionary());
-            if (dirDicFiles.isDirectory()) {
-                File[] arrayDicFiles = dirDicFiles.listFiles();
-                if (arrayDicFiles.length > 0) {
-                    for (File dicFile : arrayDicFiles) {
-                        dicFile.delete();
+            // Borramos los diccionarios e índices
+            File dirIndex = new File(configReader.getStringDirIndex());
+            if (dirIndex.isDirectory()) {
+                File[] arrayFiles = dirIndex.listFiles();
+                if (arrayFiles.length > 0) {
+                    for (File file : arrayFiles) {
+                        file.delete();
                     }
                 }
-                dirDicFiles.delete();
+                dirIndex.delete();
             }
 
-            // Borramos los índices
-            File frequencyIndex = new File(configReader.getStringFrequencyIndex());
-            frequencyIndex.delete();
-            File weightIndex = new File(configReader.getStringWeightIndex());
-            weightIndex.delete();
         }
 
         int numWords = 0;
@@ -68,9 +66,6 @@ public class SRI_Indexer {
 
         //Lectura de ficheros
         File[] arrayHTMLFiles = dirHTML.listFiles();
-
-        // Inicio de operaciones
-        long start = System.currentTimeMillis();
 
         // Filtrado HTML
         for (File HTMLFile : arrayHTMLFiles) {
@@ -202,7 +197,7 @@ public class SRI_Indexer {
 
         // Serializa y guarda los diccionarios
         if ("true".equals(configReader.getSerialize())) {
-            dataManager.saveDictionary(configReader.getStringDirDictionary());
+            dataManager.saveDictionary();
         }
 
         // Fin de operaciónes

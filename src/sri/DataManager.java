@@ -35,7 +35,7 @@ public class DataManager {
         SparseIntMatrix2D _frequencyIndex = null;
         SparseFloatMatrix2D _weightIndex = null;
 
-        File serFrequency = new File(configReader.getStringFrequencyIndex());
+        File serFrequency = new File(configReader.getStringDirIndex() + configReader.getStringFrequencyIndex());
         if (serFrequency.canRead()) {
             try {
                 FileInputStream fis = new FileInputStream(serFrequency);
@@ -47,7 +47,7 @@ public class DataManager {
             }
         }
 
-        File serWeight = new File(configReader.getStringWeightIndex());
+        File serWeight = new File(configReader.getStringDirIndex() + configReader.getStringWeightIndex());
         if (serWeight.canRead()) {
             try {
                 FileInputStream fis = new FileInputStream(serWeight);
@@ -219,17 +219,19 @@ public class DataManager {
         if ("true".equals(configReader.getSerialize()) && indexModified) {
 
             try {
-                FileOutputStream fos = new FileOutputStream(configReader.getStringFrequencyIndex());
+                File frequencyFile = new File(configReader.getStringDirIndex() + configReader.getStringFrequencyIndex());
+                FileOutputStream fos = new FileOutputStream(frequencyFile);
                 try (ObjectOutputStream oos = new ObjectOutputStream(fos)) {
                     frequencyIndex.trimToSize();
                     oos.writeObject(frequencyIndex);
                 }
             } catch (Exception e) {
-                System.out.println("Failed serializing weight table.");
+                System.out.println("Failed serializing frequency table.");
             }
 
             try {
-                FileOutputStream fos = new FileOutputStream(configReader.getStringWeightIndex());
+                File weightFile = new File(configReader.getStringDirIndex() + configReader.getStringWeightIndex());
+                FileOutputStream fos = new FileOutputStream(weightFile);
                 try (ObjectOutputStream oos = new ObjectOutputStream(fos)) {
                     weightIndex.trimToSize();
                     oos.writeObject(weightIndex);
@@ -242,9 +244,9 @@ public class DataManager {
 
     }
 
-    public void saveDictionary(String stringDirDictionary) {
-        fileDictionary.saveDictionary(stringDirDictionary);
-        wordDictionary.saveDictionary(stringDirDictionary);
+    public void saveDictionary() {
+        fileDictionary.saveDictionary();
+        wordDictionary.saveDictionary();
     }
 
     public void topFrequentWords(int sizeList) {

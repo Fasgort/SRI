@@ -1,12 +1,18 @@
+// Parámetros
 debug = false
 serialize = true
+
+// Directorios
 dirResources = ./resources/
-stopWordFilename = englishST.txt
 stringDirColEn = ./coleccionEn/
 stringDirColEnN = ./coleccionEnNormalized/
 stringDirColEnStop = ./coleccionEnStopped/
 stringDirColEnStem = ./coleccionEnStemmed/
-stringDirColEnSer = ./coleccionEnSerialized/
-stringDirDictionary = ./dictionary/
+stringDirIndex = ./index/
+
+// Ficheros
+stopWordFilename = englishST.txt
+stringFileDictionary = fileDictionary.ser
+stringWordDictionary = wordDictionary.ser
 stringFrequencyIndex = frequencyIndex.ser
 stringWeightIndex = weightIndex.ser
