@@ -14,12 +14,10 @@ public class IndexedFile implements Comparable<IndexedFile>, Serializable {
     private int idFile;
     private long checksum = -1;
     private float norm = 0F;
-    transient private boolean modified = false;
 
     protected IndexedFile(String _file) {
         file = _file;
         idFile = idNext++;
-        modified = true;
     }
 
     protected static void setNextID(int _idNext) {
@@ -52,14 +50,6 @@ public class IndexedFile implements Comparable<IndexedFile>, Serializable {
 
     protected float getNorm() {
         return norm;
-    }
-
-    public boolean isModified() {
-        return modified;
-    }
-
-    public void setModified(boolean _modified) {
-        modified = _modified;
     }
 
     @Override

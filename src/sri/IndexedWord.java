@@ -42,12 +42,8 @@ public class IndexedWord implements Comparable<IndexedWord>, Serializable {
         return idf;
     }
 
-    protected void addDocumentCount() {
-        documentCount++;
-    }
-
-    protected void subDocumentCount() {
-        documentCount--;
+    protected void setDocumentCount(int count) {
+        documentCount = count;
     }
 
     public int getDocumentCount() {

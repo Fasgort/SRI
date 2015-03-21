@@ -104,6 +104,10 @@ public class WordDictionary {
         return wordIDs.iterator();
     }
 
+    protected void setDirty() {
+        dirty = true;
+    }
+
     protected void saveDictionary() {
         if (dirty) {
             ConfigReader configReader = ConfigReader.getInstance();

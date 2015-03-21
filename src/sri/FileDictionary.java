@@ -20,8 +20,9 @@ public class FileDictionary {
     private static FileDictionary instance = null;
     final private ArrayList<IndexedFile> fileIDs; // File Dictionary ID -> file
     final private Map<String, Integer> files; // File Dictionary file -> ID
-    transient private BitSet existence;
-    transient private int existence_end;
+    transient private BitSet exists;
+    transient private BitSet modified;
+    transient private int bitsetSize;
     transient private boolean dirty = false;
 
     private FileDictionary() {
@@ -62,8 +63,9 @@ public class FileDictionary {
             files = _files;
         }
 
-        existence = new BitSet(fileIDs.size());
-        existence_end = fileIDs.size();
+        exists = new BitSet(fileIDs.size());
+        modified = new BitSet(fileIDs.size());
+        bitsetSize = fileIDs.size();
 
     }
 
@@ -123,20 +125,40 @@ public class FileDictionary {
     }
 
     public void doesExist(int idFile) {
-        if (idFile <= existence_end) {
-            existence.set(idFile);
+        if (idFile <= bitsetSize) {
+            exists.set(idFile);
         }
     }
 
     public void doesNotExist(int idFile) {
-        if (idFile <= existence_end) {
-            existence.clear(idFile);
+        if (idFile <= bitsetSize) {
+            exists.clear(idFile);
         }
     }
 
     protected boolean exists(int idFile) {
-        if (idFile <= existence_end) {
-            return existence.get(idFile);
+        if (idFile <= bitsetSize) {
+            return exists.get(idFile);
+        } else {
+            return true;
+        }
+    }
+
+    public void isModified(int idFile) {
+        if (idFile <= bitsetSize) {
+            modified.set(idFile);
+        }
+    }
+
+    public void isNotModified(int idFile) {
+        if (idFile <= bitsetSize) {
+            modified.clear(idFile);
+        }
+    }
+
+    protected boolean modified(int idFile) {
+        if (idFile <= bitsetSize) {
+            return modified.get(idFile);
         } else {
             return true;
         }
@@ -148,7 +170,7 @@ public class FileDictionary {
 
     protected void cleanDictionary() {
         int fileID;
-        while ((fileID = existence.previousClearBit(fileIDs.size() - 1)) != -1) {
+        while ((fileID = exists.previousClearBit(fileIDs.size() - 1)) != -1) {
             delete(fileID);
         }
     }
@@ -170,20 +192,28 @@ public class FileDictionary {
         }
     }
 
-    protected BitSet getExistence() {
-        return existence;
+    protected BitSet getExistBitset() {
+        return exists;
     }
 
-    protected void setExistence(BitSet _existence) {
-        existence = _existence;
+    protected void setExistBitset(BitSet bitset) {
+        exists = bitset;
     }
 
-    public int getExistence_end() {
-        return existence_end;
+    protected BitSet getModifiedBitset() {
+        return modified;
     }
 
-    public void setExistence_end(int _existence_end) {
-        existence_end = _existence_end;
+    protected void setModifiedBitset(BitSet bitset) {
+        modified = bitset;
+    }
+
+    public int getBitsetSize() {
+        return bitsetSize;
+    }
+
+    public void setBitsetSize(int size) {
+        bitsetSize = size;
     }
 
     protected int size() {
@@ -191,7 +221,7 @@ public class FileDictionary {
     }
 
     protected int existingDocuments() {
-        return existence.cardinality();
+        return exists.cardinality();
     }
 
     protected Iterator<IndexedFile> iterator() {
