@@ -6,6 +6,7 @@ import java.io.FileOutputStream;
 import java.io.ObjectInputStream;
 import java.io.ObjectOutputStream;
 import java.util.ArrayList;
+import java.util.BitSet;
 import java.util.HashMap;
 import java.util.Iterator;
 import java.util.Map;
@@ -19,6 +20,8 @@ public class WordDictionary {
     private static WordDictionary instance = null;
     final private ArrayList<IndexedWord> wordIDs; // File Dictionary ID -> word
     final private Map<String, Integer> words; // File Dictionary word -> ID
+    private transient BitSet exists;
+    private transient int bitsetSize;
     private transient boolean dirty = false;
 
     private WordDictionary() {
@@ -59,6 +62,9 @@ public class WordDictionary {
             words = _words;
         }
 
+        exists = new BitSet(wordIDs.size());
+        bitsetSize = wordIDs.size();
+
     }
 
     protected static WordDictionary getInstance() {
@@ -96,6 +102,44 @@ public class WordDictionary {
         return idWord;
     }
 
+    protected void move(int oldID, int newID) {
+        dirty = true;
+        IndexedWord movedWord = wordIDs.get(oldID);
+        IndexedWord deletedWord = wordIDs.get(newID);
+
+        wordIDs.remove(newID);
+        wordIDs.add(newID, movedWord);
+
+        wordIDs.remove(oldID);
+        wordIDs.add(oldID, deletedWord);
+
+        words.replace(movedWord.getWord(), newID);
+        words.replace(deletedWord.getWord(), oldID);
+
+        movedWord.setID(newID);
+        deletedWord.setID(oldID);
+    }
+
+    public void doesExist(int idWord) {
+        if (idWord <= bitsetSize) {
+            exists.set(idWord);
+        }
+    }
+
+    public void doesNotExist(int idWord) {
+        if (idWord <= bitsetSize) {
+            exists.clear(idWord);
+        }
+    }
+
+    protected boolean exists(int idWord) {
+        if (idWord <= bitsetSize) {
+            return exists.get(idWord);
+        } else {
+            return true;
+        }
+    }
+
     protected int size() {
         return wordIDs.size();
     }
@@ -106,6 +150,15 @@ public class WordDictionary {
 
     protected void setDirty() {
         dirty = true;
+    }
+
+    protected void cleanDictionary() {
+        int wordID;
+        while ((wordID = exists.previousClearBit(wordIDs.size() - 1)) != -1) {
+            String deleted = wordIDs.get(wordID).getWord();
+            words.remove(deleted);
+            wordIDs.remove(wordID);
+        }
     }
 
     protected void saveDictionary() {
@@ -123,6 +176,22 @@ public class WordDictionary {
                 System.out.println("Failed serializing word dictionary.");
             }
         }
+    }
+
+    protected BitSet getExistBitset() {
+        return exists;
+    }
+
+    protected void setExistBitset(BitSet bitset) {
+        exists = bitset;
+    }
+
+    public int getBitsetSize() {
+        return bitsetSize;
+    }
+
+    public void setBitsetSize(int size) {
+        bitsetSize = size;
     }
 
 }

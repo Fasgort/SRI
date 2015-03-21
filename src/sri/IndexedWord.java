@@ -11,7 +11,7 @@ public class IndexedWord implements Comparable<IndexedWord>, Serializable {
     private static final long serialVersionUID = 8769534561148736806L;
     private static int idNext = 0;
     final private String word;
-    final private int idWord;
+    private int idWord;
     private float idf;
     private int documentCount;
 
@@ -28,6 +28,10 @@ public class IndexedWord implements Comparable<IndexedWord>, Serializable {
 
     protected String getWord() {
         return word;
+    }
+
+    protected void setID(int _idWord) {
+        idWord = _idWord;
     }
 
     protected int getID() {

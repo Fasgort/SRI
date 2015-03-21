@@ -20,10 +20,10 @@ public class FileDictionary {
     private static FileDictionary instance = null;
     final private ArrayList<IndexedFile> fileIDs; // File Dictionary ID -> file
     final private Map<String, Integer> files; // File Dictionary file -> ID
-    transient private BitSet exists;
-    transient private BitSet modified;
-    transient private int bitsetSize;
-    transient private boolean dirty = false;
+    private transient BitSet exists;
+    private transient BitSet modified;
+    private transient int bitsetSize;
+    private transient boolean dirty = false;
 
     private FileDictionary() {
         ConfigReader configReader = ConfigReader.getInstance();
@@ -118,12 +118,6 @@ public class FileDictionary {
         deletedFile.setID(oldID);
     }
 
-    protected void delete(int fileID) {
-        String deleted = fileIDs.get(fileID).getFile();
-        files.remove(deleted);
-        fileIDs.remove(fileID);
-    }
-
     public void doesExist(int idFile) {
         if (idFile <= bitsetSize) {
             exists.set(idFile);
@@ -171,7 +165,9 @@ public class FileDictionary {
     protected void cleanDictionary() {
         int fileID;
         while ((fileID = exists.previousClearBit(fileIDs.size() - 1)) != -1) {
-            delete(fileID);
+            String deleted = fileIDs.get(fileID).getFile();
+            files.remove(deleted);
+            fileIDs.remove(fileID);
         }
     }
 

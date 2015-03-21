@@ -28,12 +28,12 @@ public class IndexedFile implements Comparable<IndexedFile>, Serializable {
         return file;
     }
 
-    protected int getID() {
-        return idFile;
-    }
-
     protected void setID(int _idFile) {
         idFile = _idFile;
+    }
+
+    protected int getID() {
+        return idFile;
     }
 
     protected void setChecksum(long _checksum) {
