@@ -181,7 +181,7 @@ public class DataManager {
                 IntArrayList rows = new IntArrayList(cardinality);
                 IntArrayList columns = new IntArrayList(cardinality);
                 FloatArrayList values = new FloatArrayList(cardinality);
-                weightIndex.viewPart(0, 0, rowSize, columnSize).getNonZeros(rows, columns, values);
+                weightIndex.viewPart(0, 0, fileDictionary.size(), wordDictionary.size()).getNonZeros(rows, columns, values);
 
                 for (int i = 0; i < cardinality; i++) {
                     _weightIndex.setQuick(rows.getQuick(i), columns.getQuick(i), values.getQuick(i));
@@ -414,6 +414,15 @@ public class DataManager {
     }
 
     public void topFrequentWords(int sizeList) {
+
+        if (sizeList > wordDictionary.size()) {
+            sizeList = wordDictionary.size();
+        }
+
+        if (sizeList == 0) {
+            return;
+        }
+
         LinkedList<Pair<IndexedWord, Integer>> list = new LinkedList();
         Iterator<IndexedWord> itw = wordDictionary.accessDictionary().iterator();
 
@@ -448,6 +457,8 @@ public class DataManager {
                 }
             }
         }
+
+        System.out.println("Top " + sizeList + " frequent words:");
 
         for (int i = 0; i < sizeList; i++) {
             Pair<IndexedWord, Integer> word = list.removeFirst();

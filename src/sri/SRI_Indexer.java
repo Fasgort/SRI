@@ -232,7 +232,6 @@ public class SRI_Indexer {
 
         System.out.println("Number of registered words: " + dataManager.wordQuantity());
         System.out.println("Number of processed documents: " + dataManager.fileQuantity());
-        System.out.println("Top " + topFrequentWordsSize + " frequent words:");
         dataManager.topFrequentWords(topFrequentWordsSize);
         System.out.println();
         // Fin Estadísticas
