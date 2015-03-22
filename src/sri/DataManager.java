@@ -61,13 +61,13 @@ public class DataManager {
         }
 
         if (_frequencyIndex == null) {
-            frequencyIndex = new SparseIntMatrix2D(7500, 300);
+            frequencyIndex = new SparseIntMatrix2D(300, 7500);
         } else {
             frequencyIndex = _frequencyIndex;
         }
 
         if (_weightIndex == null) {
-            weightIndex = new SparseFloatMatrix2D(7500, 300);
+            weightIndex = new SparseFloatMatrix2D(300, 7500);
         } else {
             weightIndex = _weightIndex;
         }
@@ -117,21 +117,21 @@ public class DataManager {
         IndexedFile iF = fileDictionary.search(idFile);
         fileDictionary.isModified(idFile);
         iF.setChecksum(checksum);
-        frequencyIndex.viewColumn(iF.getID()).assign(0);
-        weightIndex.viewColumn(iF.getID()).assign(0F);
+        frequencyIndex.viewRow(iF.getID()).assign(0);
+        weightIndex.viewRow(iF.getID()).assign(0F);
     }
 
     public void ignoreFile(int idFile) {
         fileDictionary.doesNotExist(idFile);
     }
 
-    public void addFrequency(int idWord, int idFile) {
-        int count = frequencyIndex.getQuick(idWord, idFile);
-        frequencyIndex.setQuick(idWord, idFile, count + 1);
+    public void addFrequency(int idFile, int idWord) {
+        int count = frequencyIndex.getQuick(idFile, idWord);
+        frequencyIndex.setQuick(idFile, idWord, count + 1);
     }
 
-    public int getFrequency(int idWord, int idFile) {
-        return frequencyIndex.getQuick(idWord, idFile);
+    public int getFrequency(int idFile, int idWord) {
+        return frequencyIndex.getQuick(idFile, idWord);
     }
 
     private void processFileDictionary() {
@@ -159,11 +159,11 @@ public class DataManager {
             // Dictionary must be refreshed
             fileDictionary.setDirty();
 
-            frequencyIndex.viewColumn(nextOne).assign(frequencyIndex.viewColumn(lastOne));
-            weightIndex.viewColumn(nextOne).assign(weightIndex.viewColumn(lastOne));
+            frequencyIndex.viewRow(nextOne).assign(frequencyIndex.viewRow(lastOne));
+            weightIndex.viewRow(nextOne).assign(weightIndex.viewRow(lastOne));
 
-            frequencyIndex.viewColumn(lastOne).assign(0);
-            weightIndex.viewColumn(lastOne).assign(0F);
+            frequencyIndex.viewRow(lastOne).assign(0);
+            weightIndex.viewRow(lastOne).assign(0F);
 
             fileDictionary.move(lastOne, nextOne);
             updatedExists.set(nextOne);
@@ -176,8 +176,8 @@ public class DataManager {
         }
 
         for (; nextOne < bitsetNewSize; nextOne++) {
-            frequencyIndex.viewColumn(nextOne).assign(0);
-            weightIndex.viewColumn(nextOne).assign(0F);
+            frequencyIndex.viewRow(nextOne).assign(0);
+            weightIndex.viewRow(nextOne).assign(0F);
         }
 
         fileDictionary.setExistBitset(updatedExists);
@@ -195,7 +195,7 @@ public class DataManager {
 
         while (itw.hasNext()) {
             IndexedWord iW = itw.next();
-            iW.setDocumentCount(frequencyIndex.viewRow(iW.getID()).cardinality());
+            iW.setDocumentCount(frequencyIndex.viewColumn(iW.getID()).cardinality());
             if (iW.getDocumentCount() != 0) {
                 exists.set(iW.getID());
             }
@@ -209,8 +209,8 @@ public class DataManager {
             // Dictionary must be refreshed
             wordDictionary.setDirty();
 
-            frequencyIndex.viewRow(nextOne).assign(frequencyIndex.viewRow(lastOne));
-            weightIndex.viewRow(nextOne).assign(weightIndex.viewRow(lastOne));
+            frequencyIndex.viewColumn(nextOne).assign(frequencyIndex.viewColumn(lastOne));
+            weightIndex.viewColumn(nextOne).assign(weightIndex.viewColumn(lastOne));
 
             wordDictionary.move(lastOne, nextOne);
             exists.set(nextOne);
@@ -234,6 +234,13 @@ public class DataManager {
         processFileDictionary();
         processWordDictionary();
 
+        /*SparseIntMatrix2D _frequencyIndex = (SparseIntMatrix2D) frequencyIndex.like(7500, 300);
+         _frequencyIndex.assign(frequencyIndex);
+         frequencyIndex = _frequencyIndex;
+        
+         SparseFloatMatrix2D _weightIndex = (SparseFloatMatrix2D) weightIndex.like(7500, 300);
+         _weightIndex.assign(weightIndex);
+         weightIndex = _weightIndex;*/
         boolean indexModified = false;
 
         // Clean removed files
@@ -279,7 +286,7 @@ public class DataManager {
             indexModified = true;
 
             itw = wordDictionary.iterator();
-            int maxFrequency = frequencyIndex.viewColumn(iF.getID()).getMaxLocation()[0];
+            int maxFrequency = frequencyIndex.viewRow(iF.getID()).getMaxLocation()[0];
             float normFile = 0F;
             while (itw.hasNext()) {
                 IndexedWord iW = itw.next();
@@ -289,20 +296,20 @@ public class DataManager {
                 } else {
                     iW.setIDF((float) log((float) numberDocuments / (float) documentsWithWord));
                 }
-                float fileFrequency = frequencyIndex.getQuick(iW.getID(), iF.getID()) / (float) maxFrequency;
+                float fileFrequency = frequencyIndex.getQuick(iF.getID(), iW.getID()) / (float) maxFrequency;
                 float weight = fileFrequency * iW.getIDF();
                 normFile += pow(weight, 2);
-                weightIndex.setQuick(iW.getID(), iF.getID(), weight);
+                weightIndex.setQuick(iF.getID(), iW.getID(), weight);
             }
             normFile = (float) sqrt(normFile);
             iF.setNorm(normFile);
             itw = wordDictionary.iterator();
             while (itw.hasNext()) {
                 IndexedWord iW = itw.next();
-                float weight = weightIndex.getQuick(iW.getID(), iF.getID());
+                float weight = weightIndex.getQuick(iF.getID(), iW.getID());
                 if (weight != 0F) {
                     float normWeight = weight / normFile;
-                    weightIndex.setQuick(iW.getID(), iF.getID(), normWeight);
+                    weightIndex.setQuick(iF.getID(), iW.getID(), normWeight);
                 }
             }
         }
@@ -350,7 +357,7 @@ public class DataManager {
         int minFrequency = 0;
         while (itw.hasNext()) {
             IndexedWord wordA = itw.next();
-            int wordAFrequency = frequencyIndex.viewRow(wordA.getID()).zSum();
+            int wordAFrequency = frequencyIndex.viewColumn(wordA.getID()).zSum();
             if (wordAFrequency > minFrequency || list.size() < sizeList) {
                 if (list.size() == 0) {
                     list.add(new Pair(wordA, wordAFrequency));

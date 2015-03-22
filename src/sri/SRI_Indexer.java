@@ -181,7 +181,7 @@ public class SRI_Indexer {
                     for (String j : tokenList) {
                         wr.write(j + "\n");
                         Integer idWord = dataManager.searchWord(j);
-                        dataManager.addFrequency(idWord, idFile);
+                        dataManager.addFrequency(idFile, idWord);
                     }
                 } catch (Exception e) {
                     System.out.println("Failed saving stemmed file " + file);
