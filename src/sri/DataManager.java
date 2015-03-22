@@ -1,5 +1,7 @@
 package sri;
 
+import cern.colt.list.tfloat.FloatArrayList;
+import cern.colt.list.tint.IntArrayList;
 import cern.colt.matrix.tfloat.impl.SparseFloatMatrix2D;
 import cern.colt.matrix.tint.impl.SparseIntMatrix2D;
 import java.io.File;
@@ -61,13 +63,13 @@ public class DataManager {
         }
 
         if (_frequencyIndex == null) {
-            frequencyIndex = new SparseIntMatrix2D(300, 7500);
+            frequencyIndex = new SparseIntMatrix2D(256, 8192);
         } else {
             frequencyIndex = _frequencyIndex;
         }
 
         if (_weightIndex == null) {
-            weightIndex = new SparseFloatMatrix2D(300, 7500);
+            weightIndex = new SparseFloatMatrix2D(256, 8192);
         } else {
             weightIndex = _weightIndex;
         }
@@ -84,6 +86,9 @@ public class DataManager {
     public int searchWord(String word) {
         int idWord = wordDictionary.search(word);
         if (idWord == -1) {
+            if (wordDictionary.size() == frequencyIndex.columns()) {
+                resizeIndex(frequencyIndex.rows(), frequencyIndex.columns() * 2);
+            }
             IndexedWord iW = new IndexedWord(word);
             idWord = wordDictionary.add(iW);
         }
@@ -97,6 +102,9 @@ public class DataManager {
     public int searchFile(String file) {
         int idFile = fileDictionary.search(file);
         if (idFile == -1) {
+            if (fileDictionary.size() == frequencyIndex.rows()) {
+                resizeIndex(frequencyIndex.rows() * 2, frequencyIndex.columns());
+            }
             IndexedFile iF = new IndexedFile(file);
             idFile = fileDictionary.add(iF);
         }
@@ -117,8 +125,8 @@ public class DataManager {
         IndexedFile iF = fileDictionary.search(idFile);
         fileDictionary.isModified(idFile);
         iF.setChecksum(checksum);
-        frequencyIndex.viewRow(iF.getID()).assign(0);
-        weightIndex.viewRow(iF.getID()).assign(0F);
+        frequencyIndex.viewPart(iF.getID(), 0, 1, wordDictionary.size()).assign(0);
+        weightIndex.viewPart(iF.getID(), 0, 1, wordDictionary.size()).assign(0F);
     }
 
     public void ignoreFile(int idFile) {
@@ -132,6 +140,57 @@ public class DataManager {
 
     public int getFrequency(int idFile, int idWord) {
         return frequencyIndex.getQuick(idFile, idWord);
+    }
+
+    private void resizeIndex(int rowSize, int columnSize) {
+
+        if (rowSize == 0) {
+            rowSize = 1;
+        }
+        if (columnSize == 0) {
+            columnSize = 1;
+        }
+
+        // Frequency Index
+        {
+            SparseIntMatrix2D _frequencyIndex = (SparseIntMatrix2D) frequencyIndex.like(rowSize, columnSize);
+
+            int cardinality = frequencyIndex.viewPart(0, 0, fileDictionary.size(), wordDictionary.size()).cardinality();
+
+            if (cardinality != 0) {
+                IntArrayList rows = new IntArrayList(cardinality);
+                IntArrayList columns = new IntArrayList(cardinality);
+                IntArrayList values = new IntArrayList(cardinality);
+                frequencyIndex.viewPart(0, 0, fileDictionary.size(), wordDictionary.size()).getNonZeros(rows, columns, values);
+
+                for (int i = 0; i < cardinality; i++) {
+                    _frequencyIndex.setQuick(rows.getQuick(i), columns.getQuick(i), values.getQuick(i));
+                }
+            }
+
+            frequencyIndex = _frequencyIndex;
+        }
+
+        // Weight Index
+        {
+            SparseFloatMatrix2D _weightIndex = (SparseFloatMatrix2D) weightIndex.like(rowSize, columnSize);
+
+            int cardinality = weightIndex.viewPart(0, 0, fileDictionary.size(), wordDictionary.size()).cardinality();
+
+            if (cardinality != 0) {
+                IntArrayList rows = new IntArrayList(cardinality);
+                IntArrayList columns = new IntArrayList(cardinality);
+                FloatArrayList values = new FloatArrayList(cardinality);
+                weightIndex.viewPart(0, 0, rowSize, columnSize).getNonZeros(rows, columns, values);
+
+                for (int i = 0; i < cardinality; i++) {
+                    _weightIndex.setQuick(rows.getQuick(i), columns.getQuick(i), values.getQuick(i));
+                }
+            }
+
+            weightIndex = _weightIndex;
+        }
+
     }
 
     private void processFileDictionary() {
@@ -159,11 +218,11 @@ public class DataManager {
             // Dictionary must be refreshed
             fileDictionary.setDirty();
 
-            frequencyIndex.viewRow(nextOne).assign(frequencyIndex.viewRow(lastOne));
-            weightIndex.viewRow(nextOne).assign(weightIndex.viewRow(lastOne));
+            frequencyIndex.viewPart(nextOne, 0, 1, wordDictionary.size()).assign(frequencyIndex.viewPart(lastOne, 0, 1, wordDictionary.size()));
+            weightIndex.viewPart(nextOne, 0, 1, wordDictionary.size()).assign(weightIndex.viewPart(lastOne, 0, 1, wordDictionary.size()));
 
-            frequencyIndex.viewRow(lastOne).assign(0);
-            weightIndex.viewRow(lastOne).assign(0F);
+            frequencyIndex.viewPart(lastOne, 0, 1, wordDictionary.size()).assign(0);
+            weightIndex.viewPart(lastOne, 0, 1, wordDictionary.size()).assign(0F);
 
             fileDictionary.move(lastOne, nextOne);
             updatedExists.set(nextOne);
@@ -176,8 +235,8 @@ public class DataManager {
         }
 
         for (; nextOne < bitsetNewSize; nextOne++) {
-            frequencyIndex.viewRow(nextOne).assign(0);
-            weightIndex.viewRow(nextOne).assign(0F);
+            frequencyIndex.viewPart(nextOne, 0, 1, wordDictionary.size()).assign(0);
+            weightIndex.viewPart(nextOne, 0, 1, wordDictionary.size()).assign(0F);
         }
 
         fileDictionary.setExistBitset(updatedExists);
@@ -195,7 +254,7 @@ public class DataManager {
 
         while (itw.hasNext()) {
             IndexedWord iW = itw.next();
-            iW.setDocumentCount(frequencyIndex.viewColumn(iW.getID()).cardinality());
+            iW.setDocumentCount(frequencyIndex.viewPart(0, iW.getID(), fileDictionary.size(), 1).cardinality());
             if (iW.getDocumentCount() != 0) {
                 exists.set(iW.getID());
             }
@@ -209,8 +268,8 @@ public class DataManager {
             // Dictionary must be refreshed
             wordDictionary.setDirty();
 
-            frequencyIndex.viewColumn(nextOne).assign(frequencyIndex.viewColumn(lastOne));
-            weightIndex.viewColumn(nextOne).assign(weightIndex.viewColumn(lastOne));
+            frequencyIndex.viewPart(0, nextOne, fileDictionary.size(), 1).assign(frequencyIndex.viewPart(0, nextOne, fileDictionary.size(), 1));
+            weightIndex.viewPart(0, nextOne, fileDictionary.size(), 1).assign(weightIndex.viewPart(0, nextOne, fileDictionary.size(), 1));
 
             wordDictionary.move(lastOne, nextOne);
             exists.set(nextOne);
@@ -234,13 +293,6 @@ public class DataManager {
         processFileDictionary();
         processWordDictionary();
 
-        /*SparseIntMatrix2D _frequencyIndex = (SparseIntMatrix2D) frequencyIndex.like(7500, 300);
-         _frequencyIndex.assign(frequencyIndex);
-         frequencyIndex = _frequencyIndex;
-        
-         SparseFloatMatrix2D _weightIndex = (SparseFloatMatrix2D) weightIndex.like(7500, 300);
-         _weightIndex.assign(weightIndex);
-         weightIndex = _weightIndex;*/
         boolean indexModified = false;
 
         // Clean removed files
@@ -269,6 +321,17 @@ public class DataManager {
 
         fileDictionary.cleanDictionary();
         wordDictionary.cleanDictionary();
+
+        if (fileDictionary.size() * 3 < frequencyIndex.rows() && wordDictionary.size() * 3 < frequencyIndex.columns()) {
+            resizeIndex(fileDictionary.size() * 2, wordDictionary.size() * 2);
+        } else {
+            if (fileDictionary.size() * 3 < frequencyIndex.rows()) {
+                resizeIndex((int) (fileDictionary.size() * 1.5), frequencyIndex.columns());
+            }
+            if (wordDictionary.size() * 3 < frequencyIndex.columns()) {
+                resizeIndex(frequencyIndex.rows(), (int) (wordDictionary.size() * 1.5));
+            }
+        }
 
         int numberDocuments = fileDictionary.existingDocuments();
 
