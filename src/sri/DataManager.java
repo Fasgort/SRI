@@ -16,7 +16,6 @@ import java.util.ArrayList;
 import java.util.BitSet;
 import java.util.Iterator;
 import java.util.LinkedList;
-import java.util.PriorityQueue;
 import javafx.util.Pair;
 
 /**
@@ -470,6 +469,18 @@ public class DataManager {
     }
 
     public void searchResults(ArrayList<String> tokenList) {
+        ConfigReader configReader = ConfigReader.getInstance();
+
+        int sizeResult = configReader.getDocumentsRecovered();
+
+        if (sizeResult > fileDictionary.size()) {
+            sizeResult = fileDictionary.size();
+        }
+
+        if (sizeResult <= 0) {
+            return;
+        }
+
         SparseFloatMatrix2D searchWeight = new SparseFloatMatrix2D(1, wordDictionary.size());
         ArrayList<IndexedWord> searchWords = new ArrayList(tokenList.size());
 
@@ -490,9 +501,10 @@ public class DataManager {
             return;
         }
 
-        PriorityQueue<SearchResult> results = new PriorityQueue();
-
+        LinkedList<Pair<IndexedFile, Float>> list = new LinkedList();
         Iterator<IndexedFile> itf = fileDictionary.iterator();
+
+        float minSimilitude = 0F;
         while (itf.hasNext()) {
             IndexedFile iF = itf.next();
             float similitude = 0F;
@@ -501,18 +513,39 @@ public class DataManager {
                 IndexedWord iW = itw.next();
                 similitude += weightIndex.getQuick(iF.getID(), iW.getID()) * searchWeight.getQuick(0, iW.getID());
             }
-            results.add(new SearchResult(iF, similitude));
+            if (similitude > minSimilitude || list.size() < sizeResult) {
+                if (list.size() == 0) {
+                    list.add(new Pair(iF, similitude));
+                } else {
+                    Iterator<Pair<IndexedFile, Float>> itList = list.descendingIterator();
+                    int i = list.size();
+                    boolean added = false;
+                    while (itList.hasNext()) {
+                        float otherSimilitude = itList.next().getValue();
+                        if (similitude <= otherSimilitude) {
+                            list.add(i, new Pair(iF, similitude));
+                            added = true;
+                            break;
+                        } else {
+                            i--;
+                        }
+                    }
+                    if (!added) {
+                        list.addFirst(new Pair(iF, similitude));
+                    }
+                }
+                if (list.size() > sizeResult) {
+                    minSimilitude = list.getLast().getValue();
+                    list.removeLast();
+                }
+            }
         }
-
-        ConfigReader configReader = ConfigReader.getInstance();
-
-        int sizeResult = configReader.getDocumentsRecovered();
 
         System.out.println("Top " + sizeResult + " relevant documents:");
 
         for (int i = 0; i < sizeResult; i++) {
-            SearchResult result = results.remove();
-            System.out.println("   " + result.getDocument().getFile() + " with " + result.getSimilitude() + " similitude value.");
+            Pair<IndexedFile, Float> result = list.removeFirst();
+            System.out.println("   " + result.getKey().getFile() + " with " + result.getValue() + " similitude value.");
         }
 
     }
