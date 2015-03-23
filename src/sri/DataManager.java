@@ -12,9 +12,11 @@ import java.io.ObjectOutputStream;
 import static java.lang.StrictMath.log;
 import static java.lang.StrictMath.pow;
 import static java.lang.StrictMath.sqrt;
+import java.util.ArrayList;
 import java.util.BitSet;
 import java.util.Iterator;
 import java.util.LinkedList;
+import java.util.PriorityQueue;
 import javafx.util.Pair;
 
 /**
@@ -463,6 +465,54 @@ public class DataManager {
         for (int i = 0; i < sizeList; i++) {
             Pair<IndexedWord, Integer> word = list.removeFirst();
             System.out.println("   " + word.getKey().getWord() + " with " + word.getValue() + " apparitions in documents.");
+        }
+
+    }
+
+    public void searchResults(ArrayList<String> tokenList) {
+        SparseFloatMatrix2D searchWeight = new SparseFloatMatrix2D(1, wordDictionary.size());
+        ArrayList<IndexedWord> searchWords = new ArrayList(tokenList.size());
+
+        Iterator<String> it = tokenList.iterator();
+
+        while (it.hasNext()) {
+            String word = it.next();
+            int idWord = searchWord(word);
+            if (idWord != -1) {
+                IndexedWord iW = wordDictionary.search(idWord);
+                searchWords.add(iW);
+                searchWeight.setQuick(0, idWord, iW.getIDF());
+            }
+        }
+
+        if (searchWeight.cardinality() == 0) {
+            System.out.println("No documents were found.");
+            return;
+        }
+
+        PriorityQueue<SearchResult> results = new PriorityQueue();
+
+        Iterator<IndexedFile> itf = fileDictionary.iterator();
+        while (itf.hasNext()) {
+            IndexedFile iF = itf.next();
+            float similitude = 0F;
+            Iterator<IndexedWord> itw = searchWords.iterator();
+            while (itw.hasNext()) {
+                IndexedWord iW = itw.next();
+                similitude += weightIndex.getQuick(iF.getID(), iW.getID()) * searchWeight.getQuick(0, iW.getID());
+            }
+            results.add(new SearchResult(iF, similitude));
+        }
+
+        ConfigReader configReader = ConfigReader.getInstance();
+
+        int sizeResult = configReader.getDocumentsRecovered();
+
+        System.out.println("Top " + sizeResult + " relevant documents:");
+
+        for (int i = 0; i < sizeResult; i++) {
+            SearchResult result = results.remove();
+            System.out.println("   " + result.getDocument().getFile() + " with " + result.getSimilitude() + " similitude value.");
         }
 
     }

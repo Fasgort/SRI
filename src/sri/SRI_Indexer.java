@@ -22,6 +22,9 @@ public class SRI_Indexer {
      */
     public static void run(String[] args) {
 
+        System.out.println("Indexing starts here.");
+        System.out.println();
+
         // Inicio de operaciones
         long start = System.currentTimeMillis();
 
@@ -206,27 +209,17 @@ public class SRI_Indexer {
         // Estadísticas
         int topFrequentWordsSize = 5;
 
-        System.out.println(
-                "Operation was completed in " + (end - start) + " milliseconds.");
-        System.out.println();
-
         if ("false".equals(configReader.getSerialize())) { // Si estamos usando ficheros serializados, no podemos generar estas estadísticas.
-            System.out.println(
-                    "Number of words after filtering: " + numWords);
+            System.out.println("Number of words after filtering: " + numWords);
             System.out.println("Average words after filtering: " + numWords / arrayHTMLFiles.length);
-            System.out.println(
-                    "Min number of words after filtering in documents: " + minNumWords);
-            System.out.println(
-                    "Max Number of words after filtering in documents: " + maxNumWords);
+            System.out.println("Min number of words after filtering in documents: " + minNumWords);
+            System.out.println("Max Number of words after filtering in documents: " + maxNumWords);
             System.out.println();
 
-            System.out.println(
-                    "Number of words after cleaning: " + numWords2);
+            System.out.println("Number of words after cleaning: " + numWords2);
             System.out.println("Average words after cleaning: " + numWords2 / arrayHTMLFiles.length);
-            System.out.println(
-                    "Min number of words after cleaning in documents: " + minNumWords2);
-            System.out.println(
-                    "Max Number of words after cleaning in documents: " + maxNumWords2);
+            System.out.println("Min number of words after cleaning in documents: " + minNumWords2);
+            System.out.println("Max Number of words after cleaning in documents: " + maxNumWords2);
             System.out.println();
         }
 
@@ -235,6 +228,11 @@ public class SRI_Indexer {
         dataManager.topFrequentWords(topFrequentWordsSize);
         System.out.println();
         // Fin Estadísticas
+
+        System.out.println("Indexing was completed in " + (end - start) + " milliseconds.");
+        System.out.println("Indexing ends here.");
+        System.out.println();
+        System.out.println();
 
     }
 

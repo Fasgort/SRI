@@ -1,6 +1,7 @@
 // Parámetros
 debug = false
 serialize = true
+documentsRecovered = 5
 
 // Directorios
 dirResources = ./resources/
@@ -16,3 +17,4 @@ stringFileDictionary = fileDictionary.ser
 stringWordDictionary = wordDictionary.ser
 stringFrequencyIndex = frequencyIndex.ser
 stringWeightIndex = weightIndex.ser
+stringSearchFile = consultas.txt

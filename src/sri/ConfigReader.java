@@ -16,6 +16,7 @@ public class ConfigReader {
     private boolean read = false;
     private String debug = "false";
     private String serialize = "false";
+    private int documentsRecovered = -1;
     private String dirResources = null;
     private String stringDirColEn = null;
     private String stringDirColEnN = null;
@@ -27,6 +28,7 @@ public class ConfigReader {
     private String stringWordDictionary = null;
     private String stringFrequencyIndex = null;
     private String stringWeightIndex = null;
+    private String stringSearchFile = null;
 
     private ConfigReader(String stringConfData) {
 
@@ -67,6 +69,9 @@ public class ConfigReader {
                         case "serialize":
                             serialize = valor;
                             break;
+                        case "documentsRecovered":
+                            documentsRecovered = Integer.parseInt(valor);
+                            break;
                         case "dirResources":
                             dirResources = valor;
                             break;
@@ -100,6 +105,9 @@ public class ConfigReader {
                         case "stringWeightIndex":
                             stringWeightIndex = valor;
                             break;
+                        case "stringSearchFile":
+                            stringSearchFile = valor;
+                            break;
                     }
                 }
             }
@@ -129,11 +137,19 @@ public class ConfigReader {
         if (read == false) {
             return true;
         }
-        if (dirResources == null || stringDirColEn == null || stringDirColEnN == null
-                || stringDirColEnStop == null || stringDirColEnStem == null
-                || stringDirIndex == null || stopWordFilename == null
-                || stringFileDictionary == null || stringWordDictionary == null
-                || stringFrequencyIndex == null || stringWeightIndex == null) {
+        if (dirResources == null
+                || documentsRecovered == -1
+                || stringDirColEn == null
+                || stringDirColEnN == null
+                || stringDirColEnStop == null
+                || stringDirColEnStem == null
+                || stringDirIndex == null
+                || stopWordFilename == null
+                || stringFileDictionary == null
+                || stringWordDictionary == null
+                || stringFrequencyIndex == null
+                || stringWeightIndex == null
+                || stringSearchFile == null) {
             System.out.println("Config file syntax is wrong. SRI can't load correctly.");
             return true;
         }
@@ -146,6 +162,10 @@ public class ConfigReader {
 
     public String getSerialize() {
         return serialize;
+    }
+
+    public int getDocumentsRecovered() {
+        return documentsRecovered;
     }
 
     public String getDirResources() {
@@ -190,6 +210,10 @@ public class ConfigReader {
 
     public String getStringWeightIndex() {
         return stringWeightIndex;
+    }
+
+    public String getStringSearchFile() {
+        return stringSearchFile;
     }
 
 }
