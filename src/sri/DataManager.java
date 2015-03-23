@@ -349,7 +349,7 @@ public class DataManager {
             indexModified = true;
 
             itw = wordDictionary.iterator();
-            int maxFrequency = frequencyIndex.viewRow(iF.getID()).getMaxLocation()[0];
+            int maxFrequency = frequencyIndex.viewPart(iF.getID(), 0, 1, wordDictionary.size()).getMaxLocation()[0];
             float normFile = 0F;
             while (itw.hasNext()) {
                 IndexedWord iW = itw.next();
