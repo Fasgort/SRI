@@ -420,7 +420,7 @@ public class DataManager {
             sizeList = wordDictionary.size();
         }
 
-        if (sizeList == 0) {
+        if (sizeList <= 0) {
             return;
         }
 
@@ -473,12 +473,13 @@ public class DataManager {
 
         int sizeResult = configReader.getDocumentsRecovered();
 
-        if (sizeResult > fileDictionary.size()) {
-            sizeResult = fileDictionary.size();
+        if (sizeResult <= 0) {
+            System.out.println("You silly. You asked for no results or even a negative number of them.");
+            return;
         }
 
-        if (sizeResult <= 0) {
-            return;
+        if (sizeResult > fileDictionary.size()) {
+            sizeResult = fileDictionary.size();
         }
 
         SparseFloatMatrix2D searchWeight = new SparseFloatMatrix2D(1, wordDictionary.size());
@@ -541,11 +542,13 @@ public class DataManager {
             }
         }
 
-        System.out.println("Top " + sizeResult + " relevant documents:");
+        System.out.println("Relevant documents ordered by similitude:");
 
         for (int i = 0; i < sizeResult; i++) {
             Pair<IndexedFile, Float> result = list.removeFirst();
-            System.out.println("   " + result.getKey().getFile() + " with " + result.getValue() + " similitude value.");
+            if (result.getValue() != 0F) {
+                System.out.println("   " + result.getKey().getFile() + " with " + result.getValue() + " similitude value.");
+            }
         }
 
     }
