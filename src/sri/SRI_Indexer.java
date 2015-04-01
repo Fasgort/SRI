@@ -71,7 +71,7 @@ public class SRI_Indexer {
         dirHTML.mkdir();
 
         //Lectura de ficheros
-        String[] arrayHTMLFiles = dirHTML.list((File dir, String name) -> name.toLowerCase().endsWith(".html"));
+        String[] arrayHTMLFiles = dirHTML.list();
 
         // Filtrado HTML
         for (String HTMLFileName : arrayHTMLFiles) {
@@ -84,12 +84,11 @@ public class SRI_Indexer {
                 while (Files.isSymbolicLink(filePath)) {
 
                     try {
-                        HTMLFileName = Files.readSymbolicLink(filePath).toString();
+                        filePath = filePath.resolveSibling(Files.readSymbolicLink(filePath));
                     } catch (IOException ex) {
                         System.err.println(ex);
                     }
-
-                    filePath = FileSystems.getDefault().getPath(configReader.getStringDirColEn(), HTMLFileName);
+                    HTMLFileName = filePath.getFileName().toString();
                     tries++;
 
                     if (tries >= 10) {
@@ -100,6 +99,10 @@ public class SRI_Indexer {
 
             }
 
+            if (!HTMLFileName.toLowerCase().endsWith(".html")) {
+                continue;
+            }
+
             ArrayList<String> tokenList;
             Integer idFile = dataManager.searchFile(HTMLFileName);
             Checksum checksum;
@@ -107,7 +110,7 @@ public class SRI_Indexer {
 
             // Generar checksum
             if (configReader.getSerialize()) {
-                try (InputStream fis = new FileInputStream(configReader.getStringDirColEn() + HTMLFileName)) {
+                try (InputStream fis = new FileInputStream(filePath.toString())) {
                     byte[] buffer = new byte[1024];
                     checksum = new Adler32();
                     int numRead;
