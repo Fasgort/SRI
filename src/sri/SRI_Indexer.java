@@ -3,7 +3,11 @@ package sri;
 import java.io.File;
 import java.io.FileInputStream;
 import java.io.FileWriter;
+import java.io.IOException;
 import java.io.InputStream;
+import java.nio.file.FileSystems;
+import java.nio.file.Files;
+import java.nio.file.Path;
 import java.util.ArrayList;
 import java.util.HashSet;
 import java.util.Set;
@@ -74,6 +78,27 @@ public class SRI_Indexer {
         for (File HTMLFile : arrayHTMLFiles) {
 
             String file = HTMLFile.getName();
+
+            {
+                Path toFile = FileSystems.getDefault().getPath(file);
+                int tries = 0;
+
+                while (Files.isSymbolicLink(toFile)) {
+                    try {
+                        file = Files.readSymbolicLink(toFile).toString();
+                        toFile = FileSystems.getDefault().getPath(file);
+                        tries++;
+                    } catch (IOException ex) {
+                        System.out.println("Error reading soft link.");
+                    }
+
+                    if (tries >= 10) {
+                        System.out.println("Is this a soft link loop? You smartass. I'm skipping it.");
+                        break;
+                    }
+
+                }
+            }
 
             if (!Pattern.matches(".*[.][hH][tT][mM][lL]", file)) {
                 continue;
