@@ -3,6 +3,7 @@ package sri;
 import java.io.File;
 import java.io.FileInputStream;
 import java.io.FileOutputStream;
+import java.io.IOException;
 import java.io.ObjectInputStream;
 import java.io.ObjectOutputStream;
 import java.util.ArrayList;
@@ -32,21 +33,19 @@ public class WordDictionary {
 
         File serDictionary = new File(configReader.getStringDirIndex() + configReader.getStringWordDictionary());
         if (serDictionary.canRead()) {
-            try {
-                FileInputStream fis = new FileInputStream(serDictionary);
-                try (ObjectInputStream ois = new ObjectInputStream(fis)) {
-                    _wordIDs = (ArrayList<IndexedWord>) ois.readObject();
-                    _words = new HashMap(300);
+            try (FileInputStream fis = new FileInputStream(serDictionary);
+                    ObjectInputStream ois = new ObjectInputStream(fis)) {
+                _wordIDs = (ArrayList<IndexedWord>) ois.readObject();
+                _words = new HashMap(300);
 
-                    Iterator<IndexedWord> it = _wordIDs.iterator();
-                    while (it.hasNext()) {
-                        IndexedWord iW = it.next();
-                        _words.put(iW.getWord(), iW.getID());
-                    }
-                    IndexedWord.setNextID(_wordIDs.size());
+                Iterator<IndexedWord> it = _wordIDs.iterator();
+                while (it.hasNext()) {
+                    IndexedWord iW = it.next();
+                    _words.put(iW.getWord(), iW.getID());
                 }
-            } catch (Exception e) {
-                System.out.println("WordDictionary failed loading its serialized file.");
+                IndexedWord.setNextID(_wordIDs.size());
+            } catch (IOException | ClassNotFoundException ex) {
+                System.err.println(ex);
             }
         }
 
@@ -165,16 +164,15 @@ public class WordDictionary {
         if (dirty) {
             ConfigReader configReader = ConfigReader.getInstance();
 
-            try {
-                File dirDictionary = new File(configReader.getStringDirIndex());
-                dirDictionary.mkdir();
-                FileOutputStream fos = new FileOutputStream(configReader.getStringDirIndex() + configReader.getStringWordDictionary());
-                try (ObjectOutputStream oos = new ObjectOutputStream(fos)) {
-                    oos.writeObject(wordIDs);
-                }
-            } catch (Exception e) {
-                System.out.println("Failed serializing word dictionary.");
+            File dirDictionary = new File(configReader.getStringDirIndex());
+            dirDictionary.mkdir();
+            try (FileOutputStream fos = new FileOutputStream(configReader.getStringDirIndex() + configReader.getStringWordDictionary());
+                    ObjectOutputStream oos = new ObjectOutputStream(fos)) {
+                oos.writeObject(wordIDs);
+            } catch (IOException ex) {
+                System.err.println(ex);
             }
+
         }
     }
 

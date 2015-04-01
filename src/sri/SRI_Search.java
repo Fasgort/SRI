@@ -3,6 +3,7 @@ package sri;
 import java.io.BufferedReader;
 import java.io.File;
 import java.io.FileReader;
+import java.io.IOException;
 import java.util.ArrayList;
 import java.util.HashSet;
 import java.util.Set;
@@ -18,7 +19,7 @@ public class SRI_Search {
      * @param args the command line arguments
      */
     public static void run(String[] args) {
-        
+
         System.out.println("Searching starts here.");
         System.out.println();
 
@@ -47,10 +48,10 @@ public class SRI_Search {
             while ((line = br.readLine()) != null) {
                 searchString = searchString.concat(line);
             }
-        } catch (Exception e) {
-            System.out.println("Failed loading " + searchInput.getName());
+        } catch (IOException ex) {
+            System.err.println(ex);
         }
-        
+
         System.out.println("Search input was: " + searchString);
         System.out.println();
 

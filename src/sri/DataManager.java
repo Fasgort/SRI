@@ -7,6 +7,7 @@ import cern.colt.matrix.tint.impl.SparseIntMatrix2D;
 import java.io.File;
 import java.io.FileInputStream;
 import java.io.FileOutputStream;
+import java.io.IOException;
 import java.io.ObjectInputStream;
 import java.io.ObjectOutputStream;
 import static java.lang.StrictMath.log;
@@ -41,25 +42,21 @@ public class DataManager {
 
         File serFrequency = new File(configReader.getStringDirIndex() + configReader.getStringFrequencyIndex());
         if (serFrequency.canRead()) {
-            try {
-                FileInputStream fis = new FileInputStream(serFrequency);
-                try (ObjectInputStream ois = new ObjectInputStream(fis)) {
-                    _frequencyIndex = (SparseIntMatrix2D) ois.readObject();
-                }
-            } catch (Exception e) {
-                System.out.println("Failed loading serialized frequency index.");
+            try (FileInputStream fis = new FileInputStream(serFrequency);
+                    ObjectInputStream ois = new ObjectInputStream(fis)) {
+                _frequencyIndex = (SparseIntMatrix2D) ois.readObject();
+            } catch (IOException | ClassNotFoundException ex) {
+                System.err.println(ex);
             }
         }
 
         File serWeight = new File(configReader.getStringDirIndex() + configReader.getStringWeightIndex());
         if (serWeight.canRead()) {
-            try {
-                FileInputStream fis = new FileInputStream(serWeight);
-                try (ObjectInputStream ois = new ObjectInputStream(fis)) {
-                    _weightIndex = (SparseFloatMatrix2D) ois.readObject();
-                }
-            } catch (Exception e) {
-                System.out.println("Failed loading serialized weight index.");
+            try (FileInputStream fis = new FileInputStream(serWeight);
+                    ObjectInputStream ois = new ObjectInputStream(fis)) {
+                _weightIndex = (SparseFloatMatrix2D) ois.readObject();
+            } catch (IOException | ClassNotFoundException ex) {
+                System.err.println(ex);
             }
         }
 
@@ -378,31 +375,25 @@ public class DataManager {
             }
         }
 
-        if ("true".equals(configReader.getSerialize()) && indexModified) {
+        if (configReader.getSerialize() && indexModified) {
 
             File indexDir = new File(configReader.getStringDirIndex());
             indexDir.mkdir();
 
-            try {
-                FileOutputStream fos = new FileOutputStream(configReader.getStringDirIndex() + configReader.getStringFrequencyIndex());
-                try (ObjectOutputStream oos = new ObjectOutputStream(fos)) {
-                    frequencyIndex.trimToSize();
-                    oos.writeObject(frequencyIndex);
-                }
-            } catch (Exception e) {
-                System.out.println("Failed serializing frequency table.");
-
+            try (FileOutputStream fos = new FileOutputStream(configReader.getStringDirIndex() + configReader.getStringFrequencyIndex());
+                    ObjectOutputStream oos = new ObjectOutputStream(fos)) {
+                frequencyIndex.trimToSize();
+                oos.writeObject(frequencyIndex);
+            } catch (IOException ex) {
+                System.err.println(ex);
             }
 
-            try {
-                FileOutputStream fos = new FileOutputStream(configReader.getStringDirIndex() + configReader.getStringWeightIndex());
-                try (ObjectOutputStream oos = new ObjectOutputStream(fos)) {
-                    weightIndex.trimToSize();
-                    oos.writeObject(weightIndex);
-                }
-            } catch (Exception e) {
-                System.out.println("Failed serializing weight table.");
-
+            try (FileOutputStream fos = new FileOutputStream(configReader.getStringDirIndex() + configReader.getStringWeightIndex());
+                    ObjectOutputStream oos = new ObjectOutputStream(fos)) {
+                weightIndex.trimToSize();
+                oos.writeObject(weightIndex);
+            } catch (IOException ex) {
+                System.err.println(ex);
             }
 
         }
@@ -550,6 +541,7 @@ public class DataManager {
                 System.out.println("   " + result.getKey().getFile() + " with " + result.getValue() + " similitude value.");
             }
         }
+        System.out.println();
 
     }
 

@@ -3,6 +3,7 @@ package sri;
 import java.io.File;
 import java.io.FileInputStream;
 import java.io.FileOutputStream;
+import java.io.IOException;
 import java.io.ObjectInputStream;
 import java.io.ObjectOutputStream;
 import java.util.ArrayList;
@@ -33,21 +34,19 @@ public class FileDictionary {
 
         File serDictionary = new File(configReader.getStringDirIndex() + configReader.getStringFileDictionary());
         if (serDictionary.canRead()) {
-            try {
-                FileInputStream fis = new FileInputStream(serDictionary);
-                try (ObjectInputStream ois = new ObjectInputStream(fis)) {
-                    _fileIDs = (ArrayList<IndexedFile>) ois.readObject();
-                    _files = new HashMap(300);
+            try (FileInputStream fis = new FileInputStream(serDictionary);
+                    ObjectInputStream ois = new ObjectInputStream(fis)) {
+                _fileIDs = (ArrayList<IndexedFile>) ois.readObject();
+                _files = new HashMap(300);
 
-                    Iterator<IndexedFile> it = _fileIDs.iterator();
-                    while (it.hasNext()) {
-                        IndexedFile iW = it.next();
-                        _files.put(iW.getFile(), iW.getID());
-                    }
-                    IndexedFile.setNextID(_fileIDs.size());
+                Iterator<IndexedFile> it = _fileIDs.iterator();
+                while (it.hasNext()) {
+                    IndexedFile iW = it.next();
+                    _files.put(iW.getFile(), iW.getID());
                 }
-            } catch (Exception e) {
-                System.out.println("FileDictionary failed loading its serialized file.");
+                IndexedFile.setNextID(_fileIDs.size());
+            } catch (IOException | ClassNotFoundException ex) {
+                System.err.println(ex);
             }
         }
 
@@ -175,16 +174,15 @@ public class FileDictionary {
         if (dirty) {
             ConfigReader configReader = ConfigReader.getInstance();
 
-            try {
-                File dirDictionary = new File(configReader.getStringDirIndex());
-                dirDictionary.mkdir();
-                FileOutputStream fos = new FileOutputStream(configReader.getStringDirIndex() + configReader.getStringFileDictionary());
-                try (ObjectOutputStream oos = new ObjectOutputStream(fos)) {
-                    oos.writeObject(fileIDs);
-                }
-            } catch (Exception e) {
-                System.out.println("Failed serializing file dictionary.");
+            File dirDictionary = new File(configReader.getStringDirIndex());
+            dirDictionary.mkdir();
+            try (FileOutputStream fos = new FileOutputStream(configReader.getStringDirIndex() + configReader.getStringFileDictionary());
+                    ObjectOutputStream oos = new ObjectOutputStream(fos)) {
+                oos.writeObject(fileIDs);
+            } catch (IOException ex) {
+                System.err.println(ex);
             }
+
         }
     }
 

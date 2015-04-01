@@ -3,6 +3,7 @@ package sri;
 import java.io.BufferedReader;
 import java.io.File;
 import java.io.FileReader;
+import java.io.IOException;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 
@@ -14,9 +15,9 @@ public class ConfigReader {
 
     private static ConfigReader instance = null;
     private boolean read = false;
-    private String debug = "false";
-    private String serialize = "false";
-    private int documentsRecovered = -1;
+    private boolean debug = false;
+    private boolean serialize = false;
+    private int documentsRecovered = 5;
     private String dirResources = null;
     private String stringDirColEn = null;
     private String stringDirColEnN = null;
@@ -35,7 +36,7 @@ public class ConfigReader {
         File confData = new File(stringConfData);
 
         try (FileReader fr = new FileReader(confData);
-                BufferedReader br = new BufferedReader(fr);) {
+                BufferedReader br = new BufferedReader(fr)) {
             Pattern comment = Pattern.compile("^[\\w]+ = [\\w/.]+");
             Matcher m;
             String linea;
@@ -64,10 +65,10 @@ public class ConfigReader {
 
                     switch (atributo) {
                         case "debug":
-                            debug = valor;
+                            debug = Boolean.parseBoolean(valor);
                             break;
                         case "serialize":
-                            serialize = valor;
+                            serialize = Boolean.parseBoolean(valor);
                             break;
                         case "documentsRecovered":
                             documentsRecovered = Integer.parseInt(valor);
@@ -113,8 +114,8 @@ public class ConfigReader {
             }
             br.close();
             read = true;
-        } catch (Exception e) {
-            System.out.println("Config file couldn't load. It must be included with the executable.");
+        } catch (IOException ex) {
+            System.err.println(ex);
         }
 
     }
@@ -138,7 +139,6 @@ public class ConfigReader {
             return true;
         }
         if (dirResources == null
-                || documentsRecovered == -1
                 || stringDirColEn == null
                 || stringDirColEnN == null
                 || stringDirColEnStop == null
@@ -156,11 +156,11 @@ public class ConfigReader {
         return false;
     }
 
-    public String getDebug() {
+    public boolean getDebug() {
         return debug;
     }
 
-    public String getSerialize() {
+    public boolean getSerialize() {
         return serialize;
     }
 

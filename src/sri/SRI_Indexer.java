@@ -11,7 +11,6 @@ import java.nio.file.Path;
 import java.util.ArrayList;
 import java.util.HashSet;
 import java.util.Set;
-import java.util.regex.Pattern;
 import java.util.zip.Adler32;
 import java.util.zip.Checksum;
 
@@ -39,7 +38,7 @@ public class SRI_Indexer {
         }
 
         // Desactivando y limpiando serializado
-        if ("false".equals(configReader.getSerialize())) {
+        if (!configReader.getSerialize()) {
 
             // Borramos los diccionarios e índices
             File dirIndex = new File(configReader.getStringDirIndex());
@@ -72,46 +71,43 @@ public class SRI_Indexer {
         dirHTML.mkdir();
 
         //Lectura de ficheros
-        File[] arrayHTMLFiles = dirHTML.listFiles();
+        String[] arrayHTMLFiles = dirHTML.list((File dir, String name) -> name.toLowerCase().endsWith(".html"));
 
         // Filtrado HTML
-        for (File HTMLFile : arrayHTMLFiles) {
+        for (String HTMLFileName : arrayHTMLFiles) {
 
-            String file = HTMLFile.getName();
+            Path filePath = FileSystems.getDefault().getPath(configReader.getStringDirColEn(), HTMLFileName);
 
             {
-                Path toFile = FileSystems.getDefault().getPath(file);
                 int tries = 0;
 
-                while (Files.isSymbolicLink(toFile)) {
+                while (Files.isSymbolicLink(filePath)) {
+
                     try {
-                        file = Files.readSymbolicLink(toFile).toString();
-                        toFile = FileSystems.getDefault().getPath(file);
-                        tries++;
+                        HTMLFileName = Files.readSymbolicLink(filePath).toString();
                     } catch (IOException ex) {
-                        System.out.println("Error reading soft link.");
+                        System.err.println(ex);
                     }
+
+                    filePath = FileSystems.getDefault().getPath(configReader.getStringDirColEn(), HTMLFileName);
+                    tries++;
 
                     if (tries >= 10) {
                         System.out.println("Is this a soft link loop? You smartass. I'm skipping it.");
                         break;
                     }
-
                 }
-            }
 
-            if (!Pattern.matches(".*[.][hH][tT][mM][lL]", file)) {
-                continue;
             }
 
             ArrayList<String> tokenList;
-            Integer idFile = dataManager.searchFile(file);
+            Integer idFile = dataManager.searchFile(HTMLFileName);
             Checksum checksum;
             boolean modified = false;
 
             // Generar checksum
-            if ("true".equals(configReader.getSerialize())) {
-                try (InputStream fis = new FileInputStream(configReader.getStringDirColEn() + file)) {
+            if (configReader.getSerialize()) {
+                try (InputStream fis = new FileInputStream(configReader.getStringDirColEn() + HTMLFileName)) {
                     byte[] buffer = new byte[1024];
                     checksum = new Adler32();
                     int numRead;
@@ -125,28 +121,29 @@ public class SRI_Indexer {
                     // Comprobar diferencias en el archivo
                     if (!dataManager.checksumFile(idFile, checksum.getValue())) {
                         modified = true;
-                        if ("true".equals(configReader.getDebug())) {
-                            System.out.println("File " + file + " was modified.");
+                        if (configReader.getDebug()) {
+                            System.out.println("File " + HTMLFileName + " was modified.");
                         }
                         dataManager.updateChecksumFile(idFile, checksum.getValue());
                     }
 
-                } catch (Exception e) {
-                    System.out.println("Checksum failed.");
+                } catch (IOException ex) {
+                    System.err.println(ex);
                 }
 
             }
 
             if (modified) {
 
-                String textFiltered = HTMLfilter.filterEN(configReader.getStringDirColEn(), file);
+                String textFiltered = HTMLfilter.filterEN(filePath);
                 if (textFiltered == null) {
                     dataManager.ignoreFile(idFile);
-                    if ("true".equals(configReader.getDebug())) {
-                        System.out.println("File " + file + " was ignored and won't be included in the SE.");
-                        System.out.println("Renamed to " + file + ".nocontent");
+                    if (configReader.getDebug()) {
+                        System.out.println("File " + HTMLFileName + " was ignored and won't be included in the SE.");
+                        System.out.println("Renamed to " + HTMLFileName + ".nocontent");
                     }
-                    File ignored = new File(configReader.getStringDirColEn() + file + ".nocontent");
+                    File HTMLFile = filePath.toFile();
+                    File ignored = new File(configReader.getStringDirColEn() + HTMLFileName + ".nocontent");
                     HTMLFile.renameTo(ignored);
                     continue;
                 }
@@ -155,12 +152,12 @@ public class SRI_Indexer {
 
                 File dirNorm = new File(configReader.getStringDirColEnN());
                 dirNorm.mkdir();
-                try (FileWriter wr = new FileWriter(configReader.getStringDirColEnN() + file.replace(".html", ".txt"))) {
+                try (FileWriter wr = new FileWriter(configReader.getStringDirColEnN() + HTMLFileName.replace(".html", ".txt"))) {
                     for (String j : tokenList) {
                         wr.write(j + "\n");
                     }
-                } catch (Exception e) {
-                    System.out.println("Failed saving normalised file " + file);
+                } catch (IOException ex) {
+                    System.err.println(ex);
                 }
 
                 numWords += tokenList.size();
@@ -180,12 +177,12 @@ public class SRI_Indexer {
 
                 File dirStop = new File(configReader.getStringDirColEnStop());
                 dirStop.mkdir();
-                try (FileWriter wr = new FileWriter(configReader.getStringDirColEnStop() + file.replace(".html", ".txt"))) {
+                try (FileWriter wr = new FileWriter(configReader.getStringDirColEnStop() + HTMLFileName.replace(".html", ".txt"))) {
                     for (String j : tokenList) {
                         wr.write(j + "\n");
                     }
-                } catch (Exception e) {
-                    System.out.println("Failed saving cleaned file " + file);
+                } catch (IOException ex) {
+                    System.err.println(ex);
                 }
 
                 numWords2 += tokenList.size();
@@ -205,14 +202,14 @@ public class SRI_Indexer {
 
                 File dirStem = new File(configReader.getStringDirColEnStem());
                 dirStem.mkdir();
-                try (FileWriter wr = new FileWriter(configReader.getStringDirColEnStem() + file.replace(".html", ".txt"))) {
+                try (FileWriter wr = new FileWriter(configReader.getStringDirColEnStem() + HTMLFileName.replace(".html", ".txt"))) {
                     for (String j : tokenList) {
                         wr.write(j + "\n");
                         Integer idWord = dataManager.searchWord(j);
                         dataManager.addFrequency(idFile, idWord);
                     }
-                } catch (Exception e) {
-                    System.out.println("Failed saving stemmed file " + file);
+                } catch (IOException ex) {
+                    System.err.println(ex);
                 }
                 // Fin Módulo Stemmer
 
@@ -224,7 +221,7 @@ public class SRI_Indexer {
         dataManager.generateIndex();
 
         // Serializa y guarda los diccionarios
-        if ("true".equals(configReader.getSerialize())) {
+        if (configReader.getSerialize()) {
             dataManager.saveDictionary();
         }
 
@@ -234,7 +231,7 @@ public class SRI_Indexer {
         // Estadísticas
         int topFrequentWordsSize = 5;
 
-        if ("false".equals(configReader.getSerialize())) { // Si estamos usando ficheros serializados, no podemos generar estas estadísticas.
+        if (!configReader.getSerialize()) { // Si estamos usando serializado, no podemos generar estas estadísticas.
             System.out.println("Number of words after filtering: " + numWords);
             System.out.println("Average words after filtering: " + numWords / arrayHTMLFiles.length);
             System.out.println("Min number of words after filtering in documents: " + minNumWords);

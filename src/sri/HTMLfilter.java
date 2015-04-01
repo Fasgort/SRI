@@ -3,6 +3,8 @@ package sri;
 import java.io.BufferedReader;
 import java.io.File;
 import java.io.FileReader;
+import java.io.IOException;
+import java.nio.file.Path;
 import java.util.ArrayList;
 import java.util.Set;
 import java.util.StringTokenizer;
@@ -19,9 +21,9 @@ import org.tartarus.snowball.SnowballStemmer;
  */
 public interface HTMLfilter {
 
-    static public String filterEN(String dir, String file) {
+    static public String filterEN(Path filePath) {
 
-        File f = new File(dir + file);
+        File f = filePath.toFile();
         Document html;
         Elements content;
 
@@ -36,11 +38,11 @@ public interface HTMLfilter {
             } else {
                 return null;
             }
-        } catch (Exception e) {
-            System.out.println("Module filterEN: File " + file + " couldn't load.");
+        } catch (IOException ex) {
+            System.err.println(ex);
+            return null;
         }
 
-        return null;
     }
 
     static public ArrayList<String> normalize(String text) {
@@ -67,6 +69,7 @@ public interface HTMLfilter {
         }
 
         return tokenList;
+
     }
 
     static public ArrayList<String> stopper(ArrayList<String> text, Set<String> stopWordSet, String stopWordDir, String stopWordFile) {
@@ -92,11 +95,11 @@ public interface HTMLfilter {
 
             return tokenList;
 
-        } catch (Exception e) {
-            System.out.println("Module stopper: File " + stopWordFile + " couldn't load.");
+        } catch (IOException ex) {
+            System.err.println(ex);
+            return null;
         }
 
-        return null;
     }
 
     static public ArrayList<String> stemmer(ArrayList<String> wordArray) {
@@ -119,12 +122,13 @@ public interface HTMLfilter {
                 }
             });
 
-        } catch (Exception e) {
-            System.out.println("Module stemmer: englishStemmer couldn't load.");
+            return stemmedWords;
+
+        } catch (ClassNotFoundException | InstantiationException | IllegalAccessException ex) {
+            System.err.println(ex);
             return null;
         }
 
-        return stemmedWords;
     }
 
 }
