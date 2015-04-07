@@ -25,7 +25,7 @@ import javafx.util.Pair;
  */
 public class DataManager {
 
-    private static DataManager instance = null;
+    private static volatile DataManager instance = null;
     final private FileDictionary fileDictionary;
     final private WordDictionary wordDictionary;
     SparseIntMatrix2D frequencyIndex;

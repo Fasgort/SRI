@@ -13,7 +13,7 @@ import java.util.regex.Pattern;
  */
 public class ConfigReader {
 
-    private static ConfigReader instance = null;
+    private static volatile ConfigReader instance = null;
     private boolean read = false;
     private boolean debug = false;
     private boolean serialize = false;

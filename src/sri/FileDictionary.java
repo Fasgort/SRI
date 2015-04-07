@@ -18,7 +18,7 @@ import java.util.Map;
  */
 public class FileDictionary {
 
-    private static FileDictionary instance = null;
+    private static volatile FileDictionary instance = null;
     final private ArrayList<IndexedFile> fileIDs; // File Dictionary ID -> file
     final private Map<String, Integer> files; // File Dictionary file -> ID
     private transient BitSet exists;

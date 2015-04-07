@@ -18,7 +18,7 @@ import java.util.Map;
  */
 public class WordDictionary {
 
-    private static WordDictionary instance = null;
+    private static volatile WordDictionary instance = null;
     final private ArrayList<IndexedWord> wordIDs; // File Dictionary ID -> word
     final private Map<String, Integer> words; // File Dictionary word -> ID
     private transient BitSet exists;

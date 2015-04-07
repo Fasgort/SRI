@@ -56,12 +56,13 @@ public interface HTMLfilter {
 
         while (st.hasMoreTokens()) {
             word = st.nextToken();
-            newWord = "";
             m = pt.matcher(word);
 
+            StringBuilder build = new StringBuilder();
             while (m.find()) {
-                newWord += m.group();
+                build.append(m.group());
             }
+            newWord = build.toString();
 
             if (!newWord.isEmpty()) {
                 tokenList.add(newWord.toLowerCase());

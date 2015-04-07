@@ -57,4 +57,23 @@ public class IndexedFile implements Comparable<IndexedFile>, Serializable {
         return idFile - w.idFile;
     }
 
+    @Override
+    public boolean equals(Object obj) {
+        if (obj == null) {
+            return false;
+        }
+        if (getClass() != obj.getClass()) {
+            return false;
+        }
+        final IndexedFile other = (IndexedFile) obj;
+        return idFile == other.idFile;
+    }
+
+    @Override
+    public int hashCode() {
+        int hash = 3;
+        hash = 41 * hash + this.idFile;
+        return hash;
+    }
+
 }

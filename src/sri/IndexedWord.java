@@ -59,4 +59,23 @@ public class IndexedWord implements Comparable<IndexedWord>, Serializable {
         return idWord - w.idWord;
     }
 
+    @Override
+    public boolean equals(Object obj) {
+        if (obj == null) {
+            return false;
+        }
+        if (getClass() != obj.getClass()) {
+            return false;
+        }
+        final IndexedWord other = (IndexedWord) obj;
+        return idWord == other.idWord;
+    }
+
+    @Override
+    public int hashCode() {
+        int hash = 7;
+        hash = 59 * hash + this.idWord;
+        return hash;
+    }
+
 }
