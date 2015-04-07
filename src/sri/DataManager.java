@@ -538,7 +538,7 @@ public class DataManager {
         for (int i = 0; i < sizeResult; i++) {
             Pair<IndexedFile, Float> result = list.removeFirst();
             if (result.getValue() != 0F) {
-                System.out.println("   " + result.getKey().getFile() + " with " + result.getValue() + " similitude value.");
+                System.out.println("   " + (i + 1) + ": " + result.getKey().getFile() + " with " + result.getValue() + " similitude value.");
             }
         }
         System.out.println();

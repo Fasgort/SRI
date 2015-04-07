@@ -113,7 +113,11 @@ public class SRI_Indexer {
 
                 }
 
-                if (!HTMLFileName.toLowerCase().endsWith(".html")) {
+                if (!filePath.toFile().isFile()) {
+                    continue;
+                }
+
+                if (!(HTMLFileName.toLowerCase().endsWith(".html") || HTMLFileName.toLowerCase().endsWith(".htm"))) {
                     continue;
                 }
 
@@ -157,11 +161,11 @@ public class SRI_Indexer {
                         dataManager.ignoreFile(idFile);
                         if (configReader.getDebug()) {
                             System.out.println("File " + HTMLFileName + " was ignored and won't be included in the SE.");
-                            System.out.println("Renamed to " + HTMLFileName + ".nocontent");
+                            //System.out.println("Renamed to " + HTMLFileName + ".nocontent");
                         }
-                        File HTMLFile = filePath.toFile();
-                        File ignored = new File(configReader.getStringDirColEn() + HTMLFileName + ".nocontent");
-                        HTMLFile.renameTo(ignored);
+                        //File HTMLFile = filePath.toFile();
+                        //File ignored = new File(configReader.getStringDirColEn() + HTMLFileName + ".nocontent");
+                        //HTMLFile.renameTo(ignored);
                         continue;
                     }
 
@@ -184,7 +188,7 @@ public class SRI_Indexer {
                     if (tokenList.size() < minNumWords) {
                         minNumWords = tokenList.size();
                     }
-                // Fin Filtrado HTML
+                    // Fin Filtrado HTML
 
                     // Módulo Stopper
                     tokenList = HTMLfilter.stopper(tokenList, stopWordSet, configReader.getDirResources(), configReader.getStopWordFilename());

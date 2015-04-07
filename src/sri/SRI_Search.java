@@ -7,7 +7,6 @@ import java.io.IOException;
 import java.util.ArrayList;
 import java.util.HashSet;
 import java.util.Set;
-import java.util.StringTokenizer;
 
 /**
  *
@@ -37,34 +36,34 @@ public class SRI_Search {
         Set<String> stopWordSet = new HashSet(1000); // Stop Word Dictionary
 
         // Lectura del fichero de consultas
-        File searchInput = new File(configReader.getStringSearchFile());
-        String searchString = "";
+        ArrayList<String> tokenList;
+        String searchString;
 
-        // Extracción de los términos de búsqueda
-        ArrayList<String> tokenList = new ArrayList();
-        try (FileReader fr = new FileReader(searchInput);
-                BufferedReader br = new BufferedReader(fr);) {
-            String line;
-            while ((line = br.readLine()) != null) {
-                searchString = searchString.concat(line);
+        // Función localizada
+        {
+            File searchInput = new File(configReader.getStringSearchFile());
+            StringBuilder build = new StringBuilder();
+
+            // Extracción de los términos de búsqueda
+            try (FileReader fr = new FileReader(searchInput);
+                    BufferedReader br = new BufferedReader(fr);) {
+                String line;
+                while ((line = br.readLine()) != null) {
+                    build.append(line);
+                }
+            } catch (IOException ex) {
+                System.err.println(ex);
             }
-        } catch (IOException ex) {
-            System.err.println(ex);
+
+            searchString = build.toString();
+
         }
 
-        System.out.println("Search input was: " + searchString);
+        System.out.println("Search input was: \"" + searchString + "\"");
         System.out.println();
 
-        StringTokenizer st = new StringTokenizer(searchString);
-
-        while (st.hasMoreTokens()) {
-            String word = st.nextToken();
-
-            if (!word.isEmpty()) {
-                tokenList.add(word.toLowerCase());
-            }
-        }
-        // Fin de la extracción
+        // Módulo Normalize
+        tokenList = HTMLfilter.normalize(searchString);
 
         // Módulo Stopper
         tokenList = HTMLfilter.stopper(tokenList, stopWordSet, configReader.getDirResources(), configReader.getStopWordFilename());
