@@ -16,53 +16,48 @@ import java.util.Map;
  *
  * @author Fasgort
  */
-public class WordDictionary {
+public class WordDictionary extends Dictionary<IndexedWord> {
 
     private static volatile WordDictionary instance = null;
-    final private ArrayList<IndexedWord> wordIDs; // File Dictionary ID -> word
-    final private Map<String, Integer> words; // File Dictionary word -> ID
-    private transient BitSet exists;
-    private transient int bitsetSize;
-    private transient boolean dirty = false;
 
     private WordDictionary() {
         ConfigReader configReader = ConfigReader.getInstance();
 
-        ArrayList<IndexedWord> _wordIDs = null;
-        Map<String, Integer> _words = null;
+        ArrayList<IndexedWord> wordIDs = null;
+        Map<String, Integer> words = null;
 
         File serDictionary = new File(configReader.getStringDirIndex() + configReader.getStringWordDictionary());
         if (serDictionary.canRead()) {
             try (FileInputStream fis = new FileInputStream(serDictionary);
                     ObjectInputStream ois = new ObjectInputStream(fis)) {
-                _wordIDs = (ArrayList<IndexedWord>) ois.readObject();
-                _words = new HashMap(300);
+                wordIDs = (ArrayList<IndexedWord>) ois.readObject();
+                words = new HashMap(300);
 
-                Iterator<IndexedWord> it = _wordIDs.iterator();
+                Iterator<IndexedWord> it = wordIDs.iterator();
                 while (it.hasNext()) {
                     IndexedWord iW = it.next();
-                    _words.put(iW.getWord(), iW.getID());
+                    words.put(iW.getWord(), iW.getID());
                 }
-                IndexedWord.setNextID(_wordIDs.size());
+                IndexedWord.setNextID(wordIDs.size());
             } catch (IOException | ClassNotFoundException ex) {
                 System.err.println(ex);
             }
         }
 
-        if (_wordIDs == null) {
-            wordIDs = new ArrayList(200);
+        if (wordIDs == null) {
+            entryIDs = new ArrayList(200);
         } else {
-            wordIDs = _wordIDs;
+            entryIDs = wordIDs;
         }
 
-        if (_words == null) {
-            words = new HashMap(300);
+        if (words == null) {
+            entries = new HashMap(300);
         } else {
-            words = _words;
+            entries = words;
         }
 
-        exists = new BitSet(wordIDs.size());
-        bitsetSize = wordIDs.size();
+        exists = new BitSet(entryIDs.size());
+        bitsetSize = entryIDs.size();
 
     }
 
@@ -73,93 +68,45 @@ public class WordDictionary {
         return instance;
     }
 
-    protected ArrayList<IndexedWord> accessDictionary() {
-        return wordIDs;
-    }
-
-    protected int search(String word) {
-        Integer idWord = words.get(word);
-        if (idWord == null) {
-            return -1;
-        }
-        return idWord;
-    }
-
-    protected IndexedWord search(int idWord) {
-        if (idWord < wordIDs.size()) {
-            return wordIDs.get(idWord);
-        } else {
-            return null;
-        }
-    }
-
+    @Override
     protected int add(IndexedWord newWord) {
         dirty = true;
         int idWord = newWord.getID();
-        words.put(newWord.getWord(), idWord);
-        wordIDs.add(idWord, newWord);
+        entries.put(newWord.getWord(), idWord);
+        entryIDs.add(idWord, newWord);
         return idWord;
     }
 
+    @Override
     protected void move(int oldID, int newID) {
         dirty = true;
-        IndexedWord movedWord = wordIDs.get(oldID);
-        IndexedWord deletedWord = wordIDs.get(newID);
+        IndexedWord movedWord = entryIDs.get(oldID);
+        IndexedWord deletedWord = entryIDs.get(newID);
 
-        wordIDs.remove(newID);
-        wordIDs.add(newID, movedWord);
+        entryIDs.remove(newID);
+        entryIDs.add(newID, movedWord);
 
-        wordIDs.remove(oldID);
-        wordIDs.add(oldID, deletedWord);
+        entryIDs.remove(oldID);
+        entryIDs.add(oldID, deletedWord);
 
-        words.replace(movedWord.getWord(), newID);
-        words.replace(deletedWord.getWord(), oldID);
+        entries.replace(movedWord.getWord(), newID);
+        entries.replace(deletedWord.getWord(), oldID);
 
         movedWord.setID(newID);
         deletedWord.setID(oldID);
     }
 
-    public void doesExist(int idWord) {
-        if (idWord <= bitsetSize) {
-            exists.set(idWord);
-        }
-    }
-
-    public void doesNotExist(int idWord) {
-        if (idWord <= bitsetSize) {
-            exists.clear(idWord);
-        }
-    }
-
-    protected boolean exists(int idWord) {
-        if (idWord <= bitsetSize) {
-            return exists.get(idWord);
-        } else {
-            return true;
-        }
-    }
-
-    protected int size() {
-        return wordIDs.size();
-    }
-
-    public Iterator<IndexedWord> iterator() {
-        return wordIDs.iterator();
-    }
-
-    protected void setDirty() {
-        dirty = true;
-    }
-
+    @Override
     protected void cleanDictionary() {
         int wordID;
-        while ((wordID = exists.previousClearBit(wordIDs.size() - 1)) != -1) {
-            String deleted = wordIDs.get(wordID).getWord();
-            words.remove(deleted);
-            wordIDs.remove(wordID);
+        while ((wordID = exists.previousClearBit(entryIDs.size() - 1)) != -1) {
+            String deleted = entryIDs.get(wordID).getWord();
+            entries.remove(deleted);
+            entryIDs.remove(wordID);
         }
     }
 
+    @Override
     protected void saveDictionary() {
         if (dirty) {
             ConfigReader configReader = ConfigReader.getInstance();
@@ -168,28 +115,12 @@ public class WordDictionary {
             dirDictionary.mkdir();
             try (FileOutputStream fos = new FileOutputStream(configReader.getStringDirIndex() + configReader.getStringWordDictionary());
                     ObjectOutputStream oos = new ObjectOutputStream(fos)) {
-                oos.writeObject(wordIDs);
+                oos.writeObject(entryIDs);
             } catch (IOException ex) {
                 System.err.println(ex);
             }
 
         }
-    }
-
-    protected BitSet getExistBitset() {
-        return exists;
-    }
-
-    protected void setExistBitset(BitSet bitset) {
-        exists = bitset;
-    }
-
-    public int getBitsetSize() {
-        return bitsetSize;
-    }
-
-    public void setBitsetSize(int size) {
-        bitsetSize = size;
     }
 
 }

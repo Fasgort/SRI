@@ -16,55 +16,50 @@ import java.util.Map;
  *
  * @author Fasgort
  */
-public class FileDictionary {
+public class FileDictionary extends Dictionary<IndexedFile> {
 
     private static volatile FileDictionary instance = null;
-    final private ArrayList<IndexedFile> fileIDs; // File Dictionary ID -> file
-    final private Map<String, Integer> files; // File Dictionary file -> ID
-    private transient BitSet exists;
     private transient BitSet modified;
-    private transient int bitsetSize;
-    private transient boolean dirty = false;
 
     private FileDictionary() {
         ConfigReader configReader = ConfigReader.getInstance();
 
-        ArrayList<IndexedFile> _fileIDs = null;
-        Map<String, Integer> _files = null;
+        ArrayList<IndexedFile> fileIDs = null;
+        Map<String, Integer> files = null;
 
         File serDictionary = new File(configReader.getStringDirIndex() + configReader.getStringFileDictionary());
         if (serDictionary.canRead()) {
             try (FileInputStream fis = new FileInputStream(serDictionary);
                     ObjectInputStream ois = new ObjectInputStream(fis)) {
-                _fileIDs = (ArrayList<IndexedFile>) ois.readObject();
-                _files = new HashMap(300);
+                fileIDs = (ArrayList<IndexedFile>) ois.readObject();
+                files = new HashMap(300);
 
-                Iterator<IndexedFile> it = _fileIDs.iterator();
+                Iterator<IndexedFile> it = fileIDs.iterator();
                 while (it.hasNext()) {
                     IndexedFile iW = it.next();
-                    _files.put(iW.getFile(), iW.getID());
+                    files.put(iW.getFile(), iW.getID());
                 }
-                IndexedFile.setNextID(_fileIDs.size());
+                IndexedFile.setNextID(fileIDs.size());
             } catch (IOException | ClassNotFoundException ex) {
                 System.err.println(ex);
             }
         }
 
-        if (_fileIDs == null) {
-            fileIDs = new ArrayList(200);
+        if (fileIDs == null) {
+            entryIDs = new ArrayList(200);
         } else {
-            fileIDs = _fileIDs;
+            entryIDs = fileIDs;
         }
 
-        if (_files == null) {
-            files = new HashMap(300);
+        if (files == null) {
+            entries = new HashMap(300);
         } else {
-            files = _files;
+            entries = files;
         }
 
-        exists = new BitSet(fileIDs.size());
-        modified = new BitSet(fileIDs.size());
-        bitsetSize = fileIDs.size();
+        exists = new BitSet(entryIDs.size());
+        modified = new BitSet(entryIDs.size());
+        bitsetSize = entryIDs.size();
 
     }
 
@@ -75,75 +70,68 @@ public class FileDictionary {
         return instance;
     }
 
-    protected int search(String file) {
-        Integer idWord = files.get(file);
-        if (idWord == null) {
-            return -1;
-        }
-        return idWord;
-    }
-
-    protected IndexedFile search(int idFile) {
-        if (idFile < fileIDs.size()) {
-            return fileIDs.get(idFile);
-        } else {
-            return null;
-        }
-    }
-
+    @Override
     protected int add(IndexedFile newFile) {
         dirty = true;
         int idFile = newFile.getID();
-        files.put(newFile.getFile(), idFile);
-        fileIDs.add(idFile, newFile);
+        entries.put(newFile.getFile(), idFile);
+        entryIDs.add(idFile, newFile);
         return idFile;
     }
 
+    @Override
     protected void move(int oldID, int newID) {
         dirty = true;
-        IndexedFile movedFile = fileIDs.get(oldID);
-        IndexedFile deletedFile = fileIDs.get(newID);
+        IndexedFile movedFile = entryIDs.get(oldID);
+        IndexedFile deletedFile = entryIDs.get(newID);
 
-        fileIDs.remove(newID);
-        fileIDs.add(newID, movedFile);
+        entryIDs.remove(newID);
+        entryIDs.add(newID, movedFile);
 
-        fileIDs.remove(oldID);
-        fileIDs.add(oldID, deletedFile);
+        entryIDs.remove(oldID);
+        entryIDs.add(oldID, deletedFile);
 
-        files.replace(movedFile.getFile(), newID);
-        files.replace(deletedFile.getFile(), oldID);
+        entries.replace(movedFile.getFile(), newID);
+        entries.replace(deletedFile.getFile(), oldID);
 
         movedFile.setID(newID);
         deletedFile.setID(oldID);
     }
 
-    public void doesExist(int idFile) {
-        if (idFile <= bitsetSize) {
-            exists.set(idFile);
+    @Override
+    protected void cleanDictionary() {
+        int fileID;
+        while ((fileID = exists.previousClearBit(entryIDs.size() - 1)) != -1) {
+            String deleted = entryIDs.get(fileID).getFile();
+            entries.remove(deleted);
+            entryIDs.remove(fileID);
         }
     }
 
-    public void doesNotExist(int idFile) {
-        if (idFile <= bitsetSize) {
-            exists.clear(idFile);
+    @Override
+    protected void saveDictionary() {
+        if (dirty) {
+            ConfigReader configReader = ConfigReader.getInstance();
+
+            File dirDictionary = new File(configReader.getStringDirIndex());
+            dirDictionary.mkdir();
+            try (FileOutputStream fos = new FileOutputStream(configReader.getStringDirIndex() + configReader.getStringFileDictionary());
+                    ObjectOutputStream oos = new ObjectOutputStream(fos)) {
+                oos.writeObject(entryIDs);
+            } catch (IOException ex) {
+                System.err.println(ex);
+            }
+
         }
     }
 
-    protected boolean exists(int idFile) {
-        if (idFile <= bitsetSize) {
-            return exists.get(idFile);
-        } else {
-            return true;
-        }
-    }
-
-    public void isModified(int idFile) {
+    protected void isModified(int idFile) {
         if (idFile <= bitsetSize) {
             modified.set(idFile);
         }
     }
 
-    public void isNotModified(int idFile) {
+    protected void isNotModified(int idFile) {
         if (idFile <= bitsetSize) {
             modified.clear(idFile);
         }
@@ -157,69 +145,12 @@ public class FileDictionary {
         }
     }
 
-    protected void setDirty() {
-        dirty = true;
-    }
-
-    protected void cleanDictionary() {
-        int fileID;
-        while ((fileID = exists.previousClearBit(fileIDs.size() - 1)) != -1) {
-            String deleted = fileIDs.get(fileID).getFile();
-            files.remove(deleted);
-            fileIDs.remove(fileID);
-        }
-    }
-
-    protected void saveDictionary() {
-        if (dirty) {
-            ConfigReader configReader = ConfigReader.getInstance();
-
-            File dirDictionary = new File(configReader.getStringDirIndex());
-            dirDictionary.mkdir();
-            try (FileOutputStream fos = new FileOutputStream(configReader.getStringDirIndex() + configReader.getStringFileDictionary());
-                    ObjectOutputStream oos = new ObjectOutputStream(fos)) {
-                oos.writeObject(fileIDs);
-            } catch (IOException ex) {
-                System.err.println(ex);
-            }
-
-        }
-    }
-
-    protected BitSet getExistBitset() {
-        return exists;
-    }
-
-    protected void setExistBitset(BitSet bitset) {
-        exists = bitset;
-    }
-
     protected BitSet getModifiedBitset() {
         return modified;
     }
 
     protected void setModifiedBitset(BitSet bitset) {
         modified = bitset;
-    }
-
-    public int getBitsetSize() {
-        return bitsetSize;
-    }
-
-    public void setBitsetSize(int size) {
-        bitsetSize = size;
-    }
-
-    protected int size() {
-        return fileIDs.size();
-    }
-
-    protected int existingDocuments() {
-        return exists.cardinality();
-    }
-
-    protected Iterator<IndexedFile> iterator() {
-        return fileIDs.iterator();
     }
 
 }

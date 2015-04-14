@@ -331,7 +331,7 @@ public class DataManager {
             }
         }
 
-        int numberDocuments = fileDictionary.existingDocuments();
+        int numberDocuments = fileDictionary.cardinality();
 
         // Generate IDF & Weight
         itf = fileDictionary.iterator();
@@ -416,7 +416,7 @@ public class DataManager {
         }
 
         LinkedList<Pair<IndexedWord, Integer>> list = new LinkedList();
-        Iterator<IndexedWord> itw = wordDictionary.accessDictionary().iterator();
+        Iterator<IndexedWord> itw = wordDictionary.iterator();
 
         int minFrequency = 0;
         while (itw.hasNext()) {
