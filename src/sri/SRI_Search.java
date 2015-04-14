@@ -63,13 +63,13 @@ public class SRI_Search {
         System.out.println();
 
         // Módulo Normalize
-        tokenList = HTMLfilter.normalize(searchString);
+        tokenList = HTMLFilter.normalize(searchString);
 
         // Módulo Stopper
-        tokenList = HTMLfilter.stopper(tokenList, stopWordSet, configReader.getDirResources(), configReader.getStopWordFilename());
+        tokenList = HTMLFilter.stopper(tokenList, stopWordSet, configReader.getDirResources(), configReader.getStopWordFilename());
 
         // Módulo Stemmer
-        tokenList = HTMLfilter.stemmer(tokenList);
+        tokenList = HTMLFilter.stemmer(tokenList);
 
         // Búsqueda
         dataManager.searchResults(tokenList);

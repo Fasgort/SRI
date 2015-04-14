@@ -18,6 +18,9 @@ public class ConfigReader {
     private boolean debug = false;
     private boolean serialize = false;
     private int documentsRecovered = 5;
+    private String filterInclude = null;
+    private String filterExclude = null;
+    private String filterFromPage = null;
     private String dirResources = null;
     private String stringDirColEn = null;
     private String stringDirColEnN = null;
@@ -37,30 +40,20 @@ public class ConfigReader {
 
         try (FileReader fr = new FileReader(confData);
                 BufferedReader br = new BufferedReader(fr)) {
-            Pattern comment = Pattern.compile("^[\\w]+ = [\\w/.]+");
+            Pattern comment = Pattern.compile("^([\\w/.]+) = ((?:\".*\")|(?:[\\w/.]+))");
             Matcher m;
             String linea;
             while ((linea = br.readLine()) != null) {
                 m = comment.matcher(linea);
                 if (m.find()) {
-                    linea = m.group();
                     String atributo;
                     String valor;
 
-                    Pattern atribP = Pattern.compile("^[\\w]+ ={0}");
-                    m = atribP.matcher(linea);
-                    if (m.find()) {
-                        atributo = m.group().trim();
-                    } else {
-                        continue;
-                    }
+                    atributo = m.group(1).trim();
+                    valor = m.group(2).trim();
 
-                    Pattern atribV = Pattern.compile("={0} [\\w/.]+");
-                    m = atribV.matcher(linea);
-                    if (m.find()) {
-                        valor = m.group().trim();
-                    } else {
-                        continue;
+                    if (valor.startsWith("\"") && valor.endsWith("\"")) {
+                        valor = valor.substring(1, valor.length() - 1);
                     }
 
                     switch (atributo) {
@@ -72,6 +65,15 @@ public class ConfigReader {
                             break;
                         case "documentsRecovered":
                             documentsRecovered = Integer.parseInt(valor);
+                            break;
+                        case "filterInclude":
+                            filterInclude = valor;
+                            break;
+                        case "filterExclude":
+                            filterExclude = valor;
+                            break;
+                        case "filterFromPage":
+                            filterFromPage = valor;
                             break;
                         case "dirResources":
                             dirResources = valor;
@@ -166,6 +168,18 @@ public class ConfigReader {
 
     public int getDocumentsRecovered() {
         return documentsRecovered;
+    }
+
+    public String getFilterInclude() {
+        return filterInclude;
+    }
+
+    public String getFilterExclude() {
+        return filterExclude;
+    }
+
+    public String getFilterFromPage() {
+        return filterFromPage;
     }
 
     public String getDirResources() {

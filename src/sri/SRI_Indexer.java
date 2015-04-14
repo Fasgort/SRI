@@ -156,7 +156,7 @@ public class SRI_Indexer {
 
                 if (modified) {
 
-                    String textFiltered = HTMLfilter.filterEN(filePath);
+                    String textFiltered = HTMLFilter.filterEN(filePath);
                     if (textFiltered == null) {
                         dataManager.ignoreFile(idFile);
                         if (configReader.getDebug()) {
@@ -169,7 +169,7 @@ public class SRI_Indexer {
                         continue;
                     }
 
-                    tokenList = HTMLfilter.normalize(textFiltered);
+                    tokenList = HTMLFilter.normalize(textFiltered);
 
                     File dirNorm = new File(configReader.getStringDirColEnN());
                     dirNorm.mkdir();
@@ -191,7 +191,7 @@ public class SRI_Indexer {
                     // Fin Filtrado HTML
 
                     // Módulo Stopper
-                    tokenList = HTMLfilter.stopper(tokenList, stopWordSet, configReader.getDirResources(), configReader.getStopWordFilename());
+                    tokenList = HTMLFilter.stopper(tokenList, stopWordSet, configReader.getDirResources(), configReader.getStopWordFilename());
                     if (tokenList == null) {
                         continue;
                     }
@@ -216,7 +216,7 @@ public class SRI_Indexer {
                 // Fin Módulo Stopper
 
                     // Módulo Stemmer
-                    tokenList = HTMLfilter.stemmer(tokenList);
+                    tokenList = HTMLFilter.stemmer(tokenList);
                     if (tokenList == null) {
                         continue;
                     }

@@ -19,9 +19,15 @@ import org.tartarus.snowball.SnowballStemmer;
  *
  * @author Fasgort
  */
-public interface HTMLfilter {
+public interface HTMLFilter {
 
     static public String filterEN(Path filePath) {
+
+        ConfigReader config = ConfigReader.getInstance();
+
+        String including = config.getFilterInclude();
+        String excluding = config.getFilterExclude();
+        String page = config.getFilterFromPage();
 
         File f = filePath.toFile();
         Document html;
@@ -29,12 +35,35 @@ public interface HTMLfilter {
 
         try {
             html = Jsoup.parse(f, null);
-            content = html.select(".post-body > p").not(".read-more");
-            if (!html.select("meta[property=og:url]").attr("content").contains("http://www.engadget.com/")) {
-                return null;
+
+            if (including == null) {
+                if (excluding == null) {
+                    content = html.getAllElements();
+                } else {
+                    content = html.getAllElements().not(excluding);
+                }
+            } else {
+                if (excluding == null) {
+                    content = html.select(including);
+                } else {
+                    content = html.select(including).not(excluding);
+                }
             }
+
+            if (page != null) {
+                if (!html.select("meta[property=og:url]").attr("content").contains(page)) {
+                    return null;
+                }
+            }
+
             if (!content.isEmpty()) {
-                return html.title() + "\n" + content.text();
+
+                if (including == null) {
+                    return content.text();
+                } else {
+                    return html.title() + "\n" + content.text();
+                }
+
             } else {
                 return null;
             }

@@ -2,6 +2,8 @@
 debug = false
 serialize = true
 documentsRecovered = 5
+filterInclude = ".post-body > p"
+filterExclude = ".read-more"
 
 // Directorios
 dirResources = ./resources/
