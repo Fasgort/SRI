@@ -61,13 +61,13 @@ public class DataManager {
         }
 
         if (_frequencyIndex == null) {
-            frequencyIndex = new SparseIntMatrix2D(256, 8192);
+            frequencyIndex = new SparseIntMatrix2D(1024, 16384);
         } else {
             frequencyIndex = _frequencyIndex;
         }
 
         if (_weightIndex == null) {
-            weightIndex = new SparseFloatMatrix2D(256, 8192);
+            weightIndex = new SparseFloatMatrix2D(1024, 16384);
         } else {
             weightIndex = _weightIndex;
         }
@@ -81,14 +81,16 @@ public class DataManager {
         return instance;
     }
 
-    public synchronized int searchWord(String word) {
+    public int searchWord(String word) {
         int idWord = wordDictionary.search(word);
         if (idWord == -1) {
-            if (wordDictionary.size() == frequencyIndex.columns()) {
-                resizeIndex(frequencyIndex.rows(), frequencyIndex.columns() * 2);
+            synchronized (this) {
+                if (wordDictionary.size() == frequencyIndex.columns()) {
+                    resizeIndex(frequencyIndex.rows(), frequencyIndex.columns() * 2);
+                }
+                IndexedWord iW = new IndexedWord(word);
+                idWord = wordDictionary.add(iW);
             }
-            IndexedWord iW = new IndexedWord(word);
-            idWord = wordDictionary.add(iW);
         }
         return idWord;
     }
@@ -97,14 +99,16 @@ public class DataManager {
         return wordDictionary.search(idWord);
     }
 
-    public synchronized int searchFile(String file) {
+    public int searchFile(String file) {
         int idFile = fileDictionary.search(file);
         if (idFile == -1) {
-            if (fileDictionary.size() == frequencyIndex.rows()) {
-                resizeIndex(frequencyIndex.rows() * 2, frequencyIndex.columns());
+            synchronized (this) {
+                if (fileDictionary.size() == frequencyIndex.rows()) {
+                    resizeIndex(frequencyIndex.rows() * 2, frequencyIndex.columns());
+                }
+                IndexedFile iF = new IndexedFile(file);
+                idFile = fileDictionary.add(iF);
             }
-            IndexedFile iF = new IndexedFile(file);
-            idFile = fileDictionary.add(iF);
         }
         return idFile;
     }
@@ -113,18 +117,22 @@ public class DataManager {
         return fileDictionary.search(idFile);
     }
 
-    public synchronized boolean checksumFile(int idFile, long checksum) {
+    public boolean checksumFile(int idFile, long checksum) {
         IndexedFile iF = fileDictionary.search(idFile);
-        fileDictionary.doesExist(idFile);
+        synchronized (this) {
+            fileDictionary.doesExist(idFile);
+        }
         return iF.getChecksum() == checksum;
     }
 
-    public synchronized void updateChecksumFile(int idFile, long checksum) {
+    public void updateChecksumFile(int idFile, long checksum) {
         IndexedFile iF = fileDictionary.search(idFile);
-        fileDictionary.isModified(idFile);
         iF.setChecksum(checksum);
-        frequencyIndex.viewPart(iF.getID(), 0, 1, wordDictionary.size()).assign(0);
-        weightIndex.viewPart(iF.getID(), 0, 1, wordDictionary.size()).assign(0F);
+        synchronized (this) {
+            fileDictionary.isModified(idFile);
+            frequencyIndex.viewPart(iF.getID(), 0, 1, wordDictionary.size()).assign(0);
+            weightIndex.viewPart(iF.getID(), 0, 1, wordDictionary.size()).assign(0F);
+        }
     }
 
     public synchronized void ignoreFile(int idFile) {
