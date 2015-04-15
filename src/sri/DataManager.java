@@ -81,7 +81,7 @@ public class DataManager {
         return instance;
     }
 
-    public int searchWord(String word) {
+    public synchronized int searchWord(String word) {
         int idWord = wordDictionary.search(word);
         if (idWord == -1) {
             if (wordDictionary.size() == frequencyIndex.columns()) {
@@ -97,7 +97,7 @@ public class DataManager {
         return wordDictionary.search(idWord);
     }
 
-    public int searchFile(String file) {
+    public synchronized int searchFile(String file) {
         int idFile = fileDictionary.search(file);
         if (idFile == -1) {
             if (fileDictionary.size() == frequencyIndex.rows()) {
@@ -113,13 +113,13 @@ public class DataManager {
         return fileDictionary.search(idFile);
     }
 
-    public boolean checksumFile(int idFile, long checksum) {
+    public synchronized boolean checksumFile(int idFile, long checksum) {
         IndexedFile iF = fileDictionary.search(idFile);
         fileDictionary.doesExist(idFile);
         return iF.getChecksum() == checksum;
     }
 
-    public void updateChecksumFile(int idFile, long checksum) {
+    public synchronized void updateChecksumFile(int idFile, long checksum) {
         IndexedFile iF = fileDictionary.search(idFile);
         fileDictionary.isModified(idFile);
         iF.setChecksum(checksum);
@@ -127,17 +127,13 @@ public class DataManager {
         weightIndex.viewPart(iF.getID(), 0, 1, wordDictionary.size()).assign(0F);
     }
 
-    public void ignoreFile(int idFile) {
+    public synchronized void ignoreFile(int idFile) {
         fileDictionary.doesNotExist(idFile);
     }
 
-    public void addFrequency(int idFile, int idWord) {
+    public synchronized void addFrequency(int idFile, int idWord) {
         int count = frequencyIndex.getQuick(idFile, idWord);
         frequencyIndex.setQuick(idFile, idWord, count + 1);
-    }
-
-    public int getFrequency(int idFile, int idWord) {
-        return frequencyIndex.getQuick(idFile, idWord);
     }
 
     private void resizeIndex(int rowSize, int columnSize) {

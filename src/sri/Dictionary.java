@@ -3,7 +3,7 @@ package sri;
 import java.util.ArrayList;
 import java.util.BitSet;
 import java.util.Iterator;
-import java.util.Map;
+import java.util.concurrent.ConcurrentMap;
 
 /**
  *
@@ -13,7 +13,7 @@ import java.util.Map;
 public abstract class Dictionary<T> {
 
     protected ArrayList<T> entryIDs; // Entry Dictionary ID -> entry
-    protected Map<String, Integer> entries; // Entry Dictionary entry -> ID
+    protected ConcurrentMap<String, Integer> entries; // Entry Dictionary entry -> ID
     protected transient BitSet exists;
     protected transient int bitsetSize;
     protected transient boolean dirty = false;
@@ -26,7 +26,7 @@ public abstract class Dictionary<T> {
         return idEntry;
     }
 
-    protected T search(int idEntry) {
+    protected synchronized T search(int idEntry) {
         if (idEntry < entryIDs.size()) {
             return entryIDs.get(idEntry);
         } else {

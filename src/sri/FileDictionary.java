@@ -8,9 +8,9 @@ import java.io.ObjectInputStream;
 import java.io.ObjectOutputStream;
 import java.util.ArrayList;
 import java.util.BitSet;
-import java.util.HashMap;
 import java.util.Iterator;
-import java.util.Map;
+import java.util.concurrent.ConcurrentHashMap;
+import java.util.concurrent.ConcurrentMap;
 
 /**
  *
@@ -25,14 +25,14 @@ public class FileDictionary extends Dictionary<IndexedFile> {
         ConfigReader configReader = ConfigReader.getInstance();
 
         ArrayList<IndexedFile> fileIDs = null;
-        Map<String, Integer> files = null;
+        ConcurrentMap<String, Integer> files = null;
 
         File serDictionary = new File(configReader.getStringDirIndex() + configReader.getStringFileDictionary());
         if (serDictionary.canRead()) {
             try (FileInputStream fis = new FileInputStream(serDictionary);
                     ObjectInputStream ois = new ObjectInputStream(fis)) {
                 fileIDs = (ArrayList<IndexedFile>) ois.readObject();
-                files = new HashMap(300);
+                files = new ConcurrentHashMap(300);
 
                 Iterator<IndexedFile> it = fileIDs.iterator();
                 while (it.hasNext()) {
@@ -52,7 +52,7 @@ public class FileDictionary extends Dictionary<IndexedFile> {
         }
 
         if (files == null) {
-            entries = new HashMap(300);
+            entries = new ConcurrentHashMap(300);
         } else {
             entries = files;
         }
