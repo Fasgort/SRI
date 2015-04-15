@@ -19,12 +19,12 @@ import java.util.zip.Checksum;
  */
 public class FileIndexer implements Runnable {
 
+    private final Set<String> stopWordSet;
     private String HTMLFileName;
-    private Set<String> stopWordSet;
 
     public FileIndexer(Set<String> stopWord, String filename) {
-        HTMLFileName = filename;
         stopWordSet = stopWord;
+        HTMLFileName = filename;
     }
 
     @Override
@@ -39,7 +39,6 @@ public class FileIndexer implements Runnable {
             boolean skipped = false;
 
             while (Files.isSymbolicLink(filePath)) {
-
                 try {
                     filePath = filePath.resolveSibling(Files.readSymbolicLink(filePath));
                 } catch (IOException ex) {
@@ -59,18 +58,12 @@ public class FileIndexer implements Runnable {
                     break;
                 }
             }
-
             if (skipped) {
                 return;
             }
-
         }
 
-        if (!filePath.toFile().isFile()) {
-            return;
-        }
-
-        if (!(HTMLFileName.toLowerCase().endsWith(".html") || HTMLFileName.toLowerCase().endsWith(".htm"))) {
+        if (!(HTMLFileName.toLowerCase().endsWith(".html") || HTMLFileName.toLowerCase().endsWith(".htm")) || !filePath.toFile().isFile()) {
             return;
         }
 
@@ -108,9 +101,11 @@ public class FileIndexer implements Runnable {
             }
 
         }
+        // Fin Checksum
 
         if (modified || !configReader.getSerialize()) {
 
+            // Filtrado HTML
             String textFiltered = HTMLFilter.filterEN(filePath);
             if (textFiltered == null) {
                 dataManager.ignoreFile(idFile);
