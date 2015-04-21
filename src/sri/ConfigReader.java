@@ -1,8 +1,10 @@
 package sri;
 
 import java.io.BufferedReader;
+import java.io.BufferedWriter;
 import java.io.File;
 import java.io.FileReader;
+import java.io.FileWriter;
 import java.io.IOException;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
@@ -15,9 +17,9 @@ public class ConfigReader {
 
     private static volatile ConfigReader instance = null;
     private boolean read = false;
-    private boolean debug = false;
-    private boolean serialize = false;
-    private int documentsRecovered = 5;
+    private String debug = null;
+    private String serialize = null;
+    private String documentsRecovered = null;
     private String filterInclude = null;
     private String filterExclude = null;
     private String filterFromPage = null;
@@ -58,13 +60,13 @@ public class ConfigReader {
 
                     switch (atributo) {
                         case "debug":
-                            debug = Boolean.parseBoolean(valor);
+                            debug = valor;
                             break;
                         case "serialize":
-                            serialize = Boolean.parseBoolean(valor);
+                            serialize = valor;
                             break;
                         case "documentsRecovered":
-                            documentsRecovered = Integer.parseInt(valor);
+                            documentsRecovered = valor;
                             break;
                         case "filterInclude":
                             filterInclude = valor;
@@ -136,38 +138,149 @@ public class ConfigReader {
         return instance;
     }
 
-    public boolean fail() {
+    public boolean fail(String stringConfData) {
         if (read == false) {
             return true;
+        } else {
+            File confData = new File(stringConfData);
+            try (FileWriter fw = new FileWriter(confData, true);
+                    BufferedWriter bw = new BufferedWriter(fw)) {
+
+                if (debug == null || (debug.compareToIgnoreCase("true") != 0 && debug.compareToIgnoreCase("false") != 0)) {
+                    debug = "false";
+                    bw.append("debug = " + debug);
+                    bw.newLine();
+                }
+
+                if (serialize == null || (serialize.compareToIgnoreCase("true") != 0 && serialize.compareToIgnoreCase("false") != 0)) {
+                    serialize = "true";
+                    bw.append("serialize = " + serialize);
+                    bw.newLine();
+                }
+
+                if (documentsRecovered == null) {
+                    documentsRecovered = "5";
+                    bw.append("documentsRecovered = " + documentsRecovered);
+                    bw.newLine();
+                } else {
+                    try {
+                        Integer.parseInt(documentsRecovered);
+                    } catch (NumberFormatException ex) {
+                        documentsRecovered = "5";
+                        bw.append("documentsRecovered = " + documentsRecovered);
+                        bw.newLine();
+                    }
+                }
+
+                if (filterInclude == null) {
+                    filterInclude = "";
+                    bw.append("filterInclude = \"\"");
+                    bw.newLine();
+                }
+
+                if (filterExclude == null) {
+                    filterExclude = "";
+                    bw.append("filterExclude = \"\"");
+                    bw.newLine();
+                }
+
+                if (filterFromPage == null) {
+                    filterFromPage = "";
+                    bw.append("filterFromPage = \"\"");
+                    bw.newLine();
+                }
+
+                if (dirResources == null) {
+                    dirResources = "./resources/";
+                    bw.append("dirResources = " + dirResources);
+                    bw.newLine();
+                }
+
+                if (stringDirColEn == null) {
+                    stringDirColEn = "./coleccionEn/";
+                    bw.append("stringDirColEn = " + stringDirColEn);
+                    bw.newLine();
+                }
+
+                if (stringDirColEnN == null) {
+                    stringDirColEnN = "./coleccionEnNormalized/";
+                    bw.append("stringDirColEnN = " + stringDirColEnN);
+                    bw.newLine();
+                }
+
+                if (stringDirColEnStop == null) {
+                    stringDirColEnStop = "./coleccionEnStopped/";
+                    bw.append("stringDirColEnStop = " + stringDirColEnStop);
+                    bw.newLine();
+                }
+
+                if (stringDirColEnStem == null) {
+                    stringDirColEnStem = "./coleccionEnStemmed/";
+                    bw.append("stringDirColEnStem = " + stringDirColEnStem);
+                    bw.newLine();
+                }
+
+                if (stringDirIndex == null) {
+                    stringDirIndex = "./index/";
+                    bw.append("stringDirIndex = " + stringDirIndex);
+                    bw.newLine();
+                }
+
+                if (stopWordFilename == null) {
+                    stopWordFilename = "englishST.txt";
+                    bw.append("stopWordFilename = " + stopWordFilename);
+                    bw.newLine();
+                }
+
+                if (stringFileDictionary == null) {
+                    stringFileDictionary = "fileDictionary.ser";
+                    bw.append("stringFileDictionary = " + stringFileDictionary);
+                    bw.newLine();
+                }
+
+                if (stringWordDictionary == null) {
+                    stringWordDictionary = "wordDictionary.ser";
+                    bw.append("stringWordDictionary = " + stringWordDictionary);
+                    bw.newLine();
+                }
+
+                if (stringFrequencyIndex == null) {
+                    stringFrequencyIndex = "frequencyIndex.ser";
+                    bw.append("stringFrequencyIndex = " + stringFrequencyIndex);
+                    bw.newLine();
+                }
+
+                if (stringWeightIndex == null) {
+                    stringWeightIndex = "weightIndex.ser";
+                    bw.append("stringWeightIndex = " + stringWeightIndex);
+                    bw.newLine();
+                }
+
+                if (stringSearchFile == null) {
+                    stringSearchFile = "consultas.txt";
+                    bw.append("stringSearchFile = " + stringSearchFile);
+                    bw.newLine();
+                }
+                return false;
+            } catch (IOException ex) {
+                System.err.println(ex);
+                return true;
+            }
+
         }
-        if (dirResources == null
-                || stringDirColEn == null
-                || stringDirColEnN == null
-                || stringDirColEnStop == null
-                || stringDirColEnStem == null
-                || stringDirIndex == null
-                || stopWordFilename == null
-                || stringFileDictionary == null
-                || stringWordDictionary == null
-                || stringFrequencyIndex == null
-                || stringWeightIndex == null
-                || stringSearchFile == null) {
-            System.out.println("Config file syntax is wrong. SRI can't load correctly.");
-            return true;
-        }
-        return false;
+
     }
 
     public boolean getDebug() {
-        return debug;
+        return Boolean.parseBoolean(debug);
     }
 
     public boolean getSerialize() {
-        return serialize;
+        return Boolean.parseBoolean(serialize);
     }
 
     public int getDocumentsRecovered() {
-        return documentsRecovered;
+        return Integer.parseInt(documentsRecovered);
     }
 
     public String getFilterInclude() {

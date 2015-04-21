@@ -26,7 +26,7 @@ public class SRI_Indexer {
 
         // Lectura de configuración
         ConfigReader configReader = ConfigReader.getInstance(args[0]);
-        if (configReader.fail()) {
+        if (configReader.fail(args[0])) {
             return;
         }
 

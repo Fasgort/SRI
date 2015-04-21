@@ -4,6 +4,7 @@ serialize = true
 documentsRecovered = 5
 filterInclude = ".article-content > p"
 filterExclude = ".post-meta, .read-more"
+filterFromPage = "engadget.com/"
 
 // Directorios
 dirResources = ./resources/
