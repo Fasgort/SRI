@@ -1,5 +1,5 @@
 ﻿// Parámetros
-debug = false
+debug = true
 serialize = true
 documentsRecovered = 5
 filterInclude = ".article-content > p"

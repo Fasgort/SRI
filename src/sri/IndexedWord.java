@@ -14,6 +14,7 @@ public class IndexedWord implements Comparable<IndexedWord>, Serializable {
     private int idWord;
     private float idf;
     private int documentCount;
+    private transient boolean exists = false;
 
     protected IndexedWord(String _word) {
         word = _word;
@@ -52,6 +53,18 @@ public class IndexedWord implements Comparable<IndexedWord>, Serializable {
 
     public int getDocumentCount() {
         return documentCount;
+    }
+
+    protected void doesExist() {
+        exists = true;
+    }
+
+    protected void doesNotExist() {
+        exists = false;
+    }
+
+    protected boolean exists() {
+        return exists;
     }
 
     @Override

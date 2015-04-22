@@ -10,13 +10,13 @@ import java.io.FileOutputStream;
 import java.io.IOException;
 import java.io.ObjectInputStream;
 import java.io.ObjectOutputStream;
-import static java.lang.StrictMath.log;
-import static java.lang.StrictMath.pow;
-import static java.lang.StrictMath.sqrt;
+import static java.lang.Math.log;
+import static java.lang.Math.pow;
+import static java.lang.Math.sqrt;
 import java.util.ArrayList;
-import java.util.BitSet;
 import java.util.Iterator;
 import java.util.LinkedList;
+import java.util.concurrent.ConcurrentMap;
 import javafx.util.Pair;
 
 /**
@@ -26,6 +26,7 @@ import javafx.util.Pair;
 public class DataManager {
 
     private static volatile DataManager instance = null;
+    private static transient boolean indexModified = false;
     final private FileDictionary fileDictionary;
     final private WordDictionary wordDictionary;
     SparseIntMatrix2D frequencyIndex;
@@ -81,7 +82,7 @@ public class DataManager {
         return instance;
     }
 
-    public int searchWord(String word) {
+    public int searchOrAddWord(String word) {
         int idWord = wordDictionary.search(word);
         if (idWord == -1) {
             synchronized (this) {
@@ -90,24 +91,30 @@ public class DataManager {
                 }
                 IndexedWord iW = new IndexedWord(word);
                 idWord = wordDictionary.add(iW);
+                indexModified = true;
             }
         }
         return idWord;
+    }
+
+    public int searchWord(String word) {
+        return wordDictionary.search(word);
     }
 
     public IndexedWord searchWord(int idWord) {
         return wordDictionary.search(idWord);
     }
 
-    public int searchFile(String file) {
-        int idFile = fileDictionary.search(file);
+    public int searchOrAddFile(long checksum) {
+        int idFile = fileDictionary.search(checksum);
         if (idFile == -1) {
             synchronized (this) {
                 if (fileDictionary.size() == frequencyIndex.rows()) {
                     resizeIndex(frequencyIndex.rows() * 2, frequencyIndex.columns());
                 }
-                IndexedFile iF = new IndexedFile(file);
+                IndexedFile iF = new IndexedFile(checksum);
                 idFile = fileDictionary.add(iF);
+                indexModified = true;
             }
         }
         return idFile;
@@ -117,21 +124,28 @@ public class DataManager {
         return fileDictionary.search(idFile);
     }
 
-    public boolean checksumFile(int idFile, long checksum) {
+    public boolean isFileNew(int idFile) {
+        return fileDictionary.isNew(idFile);
+    }
+
+    public boolean isFileNamed(int idFile) {
+        return fileDictionary.isNamed(idFile);
+    }
+
+    public void nameFile(int idFile, String file) {
         IndexedFile iF = fileDictionary.search(idFile);
+        iF.setFile(file);
         synchronized (this) {
             fileDictionary.doesExist(idFile);
         }
-        return iF.getChecksum() == checksum;
     }
 
-    public void updateChecksumFile(int idFile, long checksum) {
+    public void updateFile(int idFile, String file, String title) {
         IndexedFile iF = fileDictionary.search(idFile);
-        iF.setChecksum(checksum);
+        iF.setFile(file);
+        iF.setTitle(title);
         synchronized (this) {
-            fileDictionary.isModified(idFile);
-            frequencyIndex.viewPart(iF.getID(), 0, 1, wordDictionary.size()).assign(0);
-            weightIndex.viewPart(iF.getID(), 0, 1, wordDictionary.size()).assign(0F);
+            fileDictionary.doesExist(idFile);
         }
     }
 
@@ -145,6 +159,8 @@ public class DataManager {
     }
 
     private void resizeIndex(int rowSize, int columnSize) {
+
+        indexModified = true;
 
         if (rowSize == 0) {
             rowSize = 1;
@@ -197,133 +213,77 @@ public class DataManager {
 
     private void processFileDictionary() {
 
-        int bitsetSize = fileDictionary.getBitsetSize();
-        int bitsetNewSize = fileDictionary.size();
+        Pair<ArrayList<IndexedFile>, ConcurrentMap<Long, Integer>> dictionary = fileDictionary.accessDictionary();
 
-        BitSet exists = fileDictionary.getExistBitset();
-        BitSet updatedExists = new BitSet(fileDictionary.size());
+        ArrayList<IndexedFile> entryIDs = dictionary.getKey();
+        ConcurrentMap<Long, Integer> entries = dictionary.getValue();
 
-        BitSet modified = fileDictionary.getModifiedBitset();
-        BitSet updatedModified = new BitSet(fileDictionary.size());
-
-        updatedExists.or(exists);
-        updatedExists.set(bitsetSize, bitsetNewSize);
-
-        updatedModified.or(modified);
-        updatedModified.set(bitsetSize, bitsetNewSize);
-
-        int lastOne = updatedExists.previousSetBit(bitsetNewSize - 1);
-        int nextOne = updatedExists.nextClearBit(0);
-
-        while (nextOne < lastOne) {
-
-            // Dictionary must be refreshed
-            fileDictionary.setDirty();
-
-            frequencyIndex.viewPart(nextOne, 0, 1, wordDictionary.size()).assign(frequencyIndex.viewPart(lastOne, 0, 1, wordDictionary.size()));
-            weightIndex.viewPart(nextOne, 0, 1, wordDictionary.size()).assign(weightIndex.viewPart(lastOne, 0, 1, wordDictionary.size()));
-
-            frequencyIndex.viewPart(lastOne, 0, 1, wordDictionary.size()).assign(0);
-            weightIndex.viewPart(lastOne, 0, 1, wordDictionary.size()).assign(0F);
-
-            fileDictionary.move(lastOne, nextOne);
-            updatedExists.set(nextOne);
-            updatedModified.set(nextOne);
-            updatedExists.clear(lastOne);
-
-            lastOne = updatedExists.previousSetBit(bitsetNewSize - 1);
-            nextOne = updatedExists.nextClearBit(0);
-
+        for (int fileID = 0; fileID < entryIDs.size(); fileID++) {
+            IndexedFile iF = entryIDs.get(fileID);
+            if (!iF.exists()) {
+                IndexedFile iF2 = entryIDs.get(entryIDs.size() - 1);
+                while (!iF2.exists()) {
+                    entryIDs.remove(iF2.getID());
+                    entries.remove(iF2.getChecksum());
+                    frequencyIndex.viewPart(iF2.getID(), 0, 1, wordDictionary.size()).assign(0);
+                    weightIndex.viewPart(iF2.getID(), 0, 1, wordDictionary.size()).assign(0F);
+                    fileDictionary.setDirty();
+                    if (iF2 == iF) {
+                        System.out.println(entryIDs.size());
+                        return;
+                    }
+                    iF2 = entryIDs.get(entryIDs.size() - 1);
+                }
+                frequencyIndex.viewPart(iF.getID(), 0, 1, wordDictionary.size()).assign(frequencyIndex.viewPart(iF2.getID(), 0, 1, wordDictionary.size()));
+                weightIndex.viewPart(iF.getID(), 0, 1, wordDictionary.size()).assign(weightIndex.viewPart(iF2.getID(), 0, 1, wordDictionary.size()));
+                frequencyIndex.viewPart(iF2.getID(), 0, 1, wordDictionary.size()).assign(0);
+                weightIndex.viewPart(iF2.getID(), 0, 1, wordDictionary.size()).assign(0F);
+                fileDictionary.replaceAndDelete(iF2.getID(), iF.getID());
+            }
         }
-
-        for (; nextOne < bitsetNewSize; nextOne++) {
-            frequencyIndex.viewPart(nextOne, 0, 1, wordDictionary.size()).assign(0);
-            weightIndex.viewPart(nextOne, 0, 1, wordDictionary.size()).assign(0F);
-        }
-
-        fileDictionary.setExistBitset(updatedExists);
-        fileDictionary.setModifiedBitset(updatedModified);
-        fileDictionary.setBitsetSize(bitsetNewSize);
-
     }
 
     private void processWordDictionary() {
-
-        int bitsetSize = wordDictionary.size();
-        BitSet exists = new BitSet(bitsetSize);
-
         Iterator<IndexedWord> itw = wordDictionary.iterator();
-
         while (itw.hasNext()) {
             IndexedWord iW = itw.next();
             iW.setDocumentCount(frequencyIndex.viewPart(0, iW.getID(), fileDictionary.size(), 1).cardinality());
             if (iW.getDocumentCount() != 0) {
-                exists.set(iW.getID());
+                iW.doesExist();
             }
         }
 
-        int lastOne = exists.previousSetBit(bitsetSize - 1);
-        int nextOne = exists.nextClearBit(0);
+        Pair<ArrayList<IndexedWord>, ConcurrentMap<String, Integer>> dictionary = wordDictionary.accessDictionary();
 
-        while (nextOne < lastOne) {
+        ArrayList<IndexedWord> entryIDs = dictionary.getKey();
+        ConcurrentMap<String, Integer> entries = dictionary.getValue();
 
-            // Dictionary must be refreshed
-            wordDictionary.setDirty();
-
-            frequencyIndex.viewPart(0, nextOne, fileDictionary.size(), 1).assign(frequencyIndex.viewPart(0, nextOne, fileDictionary.size(), 1));
-            weightIndex.viewPart(0, nextOne, fileDictionary.size(), 1).assign(weightIndex.viewPart(0, nextOne, fileDictionary.size(), 1));
-
-            wordDictionary.move(lastOne, nextOne);
-            exists.set(nextOne);
-            exists.clear(lastOne);
-
-            lastOne = exists.previousSetBit(bitsetSize - 1);
-            nextOne = exists.nextClearBit(0);
-
+        for (int wordID = 0; wordID < entryIDs.size(); wordID++) {
+            IndexedWord iW = entryIDs.get(wordID);
+            if (!iW.exists()) {
+                IndexedWord iW2 = entryIDs.get(entryIDs.size() - 1);
+                while (!iW2.exists()) {
+                    entryIDs.remove(iW2.getID());
+                    entries.remove(iW2.getWord());
+                    frequencyIndex.viewPart(0, iW2.getID(), fileDictionary.size(), 1).assign(0);
+                    weightIndex.viewPart(0, iW2.getID(), fileDictionary.size(), 1).assign(0F);
+                    wordDictionary.setDirty();
+                    if (iW2 == iW) {
+                        return;
+                    }
+                    iW2 = entryIDs.get(entryIDs.size() - 1);
+                }
+                frequencyIndex.viewPart(0, iW.getID(), fileDictionary.size(), 1).assign(frequencyIndex.viewPart(0, iW.getID(), fileDictionary.size(), 1));
+                weightIndex.viewPart(0, iW.getID(), fileDictionary.size(), 1).assign(weightIndex.viewPart(0, iW.getID(), fileDictionary.size(), 1));
+                frequencyIndex.viewPart(0, iW2.getID(), fileDictionary.size(), 1).assign(0);
+                weightIndex.viewPart(0, iW2.getID(), fileDictionary.size(), 1).assign(0F);
+                wordDictionary.replaceAndDelete(iW2.getID(), iW.getID());
+            }
         }
-
-        wordDictionary.setExistBitset(exists);
-        wordDictionary.setBitsetSize(bitsetSize);
 
     }
 
-    public void generateIndex() {
-        ConfigReader configReader = ConfigReader.getInstance();
-        Iterator<IndexedWord> itw;
-        Iterator<IndexedFile> itf;
-
-        processFileDictionary();
-        processWordDictionary();
-
-        boolean indexModified = false;
-
-        // Clean removed files
-        BitSet existence = fileDictionary.getExistBitset();
-        int fileID;
-        int count = 0;
-        while ((fileID = existence.previousClearBit(fileDictionary.size() - 1 - count)) != -1) {
-            count++;
-            IndexedFile iF = fileDictionary.search(fileID);
-
-            // File Dictionary must be refreshed
-            fileDictionary.setDirty();
-            wordDictionary.setDirty();
-            indexModified = true;
-
-            // Clean old files
-            File deletedFile;
-            deletedFile = new File(configReader.getStringDirColEnN() + iF.getFile().replace(".html", ".txt"));
-            deletedFile.deleteOnExit();
-            deletedFile = new File(configReader.getStringDirColEnStop() + iF.getFile().replace(".html", ".txt"));
-            deletedFile.deleteOnExit();
-            deletedFile = new File(configReader.getStringDirColEnStem() + iF.getFile().replace(".html", ".txt"));
-            deletedFile.deleteOnExit();
-
-        }
-
-        fileDictionary.cleanDictionary();
-        wordDictionary.cleanDictionary();
-
+    public void updateMatrixSize() {
         if (fileDictionary.size() * 3 < frequencyIndex.rows() && wordDictionary.size() * 3 < frequencyIndex.columns()) {
             resizeIndex(fileDictionary.size() * 2, wordDictionary.size() * 2);
         } else {
@@ -334,25 +294,13 @@ public class DataManager {
                 resizeIndex(frequencyIndex.rows(), (int) (wordDictionary.size() * 1.5));
             }
         }
+    }
 
-        int numberDocuments = fileDictionary.cardinality();
+    public void generateIDF() {
+        int numberDocuments = fileDictionary.size();
 
-        // Generate IDF & Weight
-        itf = fileDictionary.iterator();
-        while (itf.hasNext()) {
-            IndexedFile iF = itf.next();
-            if (!fileDictionary.modified(iF.getID())) {
-                continue;
-            }
-
-            // Changes must be reflected into the saved files
-            fileDictionary.setDirty();
-            wordDictionary.setDirty();
-            indexModified = true;
-
-            itw = wordDictionary.iterator();
-            int maxFrequency = frequencyIndex.viewPart(iF.getID(), 0, 1, wordDictionary.size()).getMaxLocation()[0];
-            float normFile = 0F;
+        if (wordDictionary.isDirty()) {
+            Iterator<IndexedWord> itw = wordDictionary.iterator();
             while (itw.hasNext()) {
                 IndexedWord iW = itw.next();
                 int documentsWithWord = iW.getDocumentCount();
@@ -361,9 +309,27 @@ public class DataManager {
                 } else {
                     iW.setIDF((float) log((float) numberDocuments / (float) documentsWithWord));
                 }
+
+            }
+            // As IDF changed, documents must be refreshed
+            fileDictionary.setDirty();
+        }
+
+    }
+
+    public void generateWeight() {
+        Iterator<IndexedFile> itf = fileDictionary.iterator();
+        while (itf.hasNext()) {
+            IndexedFile iF = itf.next();
+
+            Iterator<IndexedWord> itw = wordDictionary.iterator();
+            int maxFrequency = frequencyIndex.viewPart(iF.getID(), 0, 1, wordDictionary.size()).getMaxLocation()[0];
+            float normFile = 0F;
+            while (itw.hasNext()) {
+                IndexedWord iW = itw.next();
                 float fileFrequency = frequencyIndex.getQuick(iF.getID(), iW.getID()) / (float) maxFrequency;
                 float weight = fileFrequency * iW.getIDF();
-                normFile += pow(weight, 2);
+                normFile += (float) pow(weight, 2);
                 weightIndex.setQuick(iF.getID(), iW.getID(), weight);
             }
             normFile = (float) sqrt(normFile);
@@ -377,6 +343,18 @@ public class DataManager {
                     weightIndex.setQuick(iF.getID(), iW.getID(), normWeight);
                 }
             }
+        }
+    }
+
+    public void generateIndex() {
+        ConfigReader configReader = ConfigReader.getInstance();
+
+        if (indexModified) {
+            processFileDictionary();
+            processWordDictionary();
+            updateMatrixSize();
+            generateIDF();
+            generateWeight();
         }
 
         if (configReader.getSerialize() && indexModified) {
@@ -542,7 +520,9 @@ public class DataManager {
         for (int i = 0; i < sizeResult; i++) {
             Pair<IndexedFile, Float> result = list.removeFirst();
             if (result.getValue() != 0F) {
-                System.out.println("   " + (i + 1) + ": " + result.getKey().getFile() + " with " + result.getValue() + " similitude value.");
+                System.out.println("    " + (i + 1) + ": " + result.getKey().getTitle());
+                System.out.println("    " + "File is named \"" + result.getKey().getFile() + "\" and has \"" + result.getValue() + "\" similitude value.");
+                System.out.println();
             }
         }
         System.out.println();

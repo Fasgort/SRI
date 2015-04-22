@@ -7,8 +7,6 @@ import java.io.IOException;
 import java.io.ObjectInputStream;
 import java.io.ObjectOutputStream;
 import java.util.ArrayList;
-import java.util.BitSet;
-import java.util.Iterator;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.ConcurrentMap;
 
@@ -16,29 +14,22 @@ import java.util.concurrent.ConcurrentMap;
  *
  * @author Fasgort
  */
-public class FileDictionary extends Dictionary<IndexedFile> {
+public class FileDictionary extends Dictionary<IndexedFile, Long> {
 
     private static volatile FileDictionary instance = null;
-    private transient BitSet modified;
 
     private FileDictionary() {
         ConfigReader configReader = ConfigReader.getInstance();
 
         ArrayList<IndexedFile> fileIDs = null;
-        ConcurrentMap<String, Integer> files = null;
+        ConcurrentMap<Long, Integer> checksums = null;
 
         File serDictionary = new File(configReader.getStringDirIndex() + configReader.getStringFileDictionary());
         if (serDictionary.canRead()) {
             try (FileInputStream fis = new FileInputStream(serDictionary);
                     ObjectInputStream ois = new ObjectInputStream(fis)) {
                 fileIDs = (ArrayList<IndexedFile>) ois.readObject();
-                files = new ConcurrentHashMap(300);
-
-                Iterator<IndexedFile> it = fileIDs.iterator();
-                while (it.hasNext()) {
-                    IndexedFile iW = it.next();
-                    files.put(iW.getFile(), iW.getID());
-                }
+                checksums = (ConcurrentMap<Long, Integer>) ois.readObject();
                 IndexedFile.setNextID(fileIDs.size());
             } catch (IOException | ClassNotFoundException ex) {
                 System.err.println(ex);
@@ -51,15 +42,11 @@ public class FileDictionary extends Dictionary<IndexedFile> {
             entryIDs = fileIDs;
         }
 
-        if (files == null) {
+        if (checksums == null) {
             entries = new ConcurrentHashMap(300);
         } else {
-            entries = files;
+            entries = checksums;
         }
-
-        exists = new BitSet(entryIDs.size());
-        modified = new BitSet(entryIDs.size());
-        bitsetSize = entryIDs.size();
 
     }
 
@@ -74,38 +61,35 @@ public class FileDictionary extends Dictionary<IndexedFile> {
     protected int add(IndexedFile newFile) {
         dirty = true;
         int idFile = newFile.getID();
-        entries.put(newFile.getFile(), idFile);
+        entries.put(newFile.getChecksum(), idFile);
         entryIDs.add(idFile, newFile);
         return idFile;
     }
 
     @Override
-    protected void move(int oldID, int newID) {
+    protected void replaceAndDelete(int movedFileID, int deletedFileID) {
         dirty = true;
-        IndexedFile movedFile = entryIDs.get(oldID);
-        IndexedFile deletedFile = entryIDs.get(newID);
+        IndexedFile movedFile = entryIDs.get(movedFileID);
+        IndexedFile deletedFile = entryIDs.get(deletedFileID);
 
-        entryIDs.remove(newID);
-        entryIDs.add(newID, movedFile);
+        entryIDs.set(deletedFileID, movedFile);
+        entryIDs.remove(movedFileID);
 
-        entryIDs.remove(oldID);
-        entryIDs.add(oldID, deletedFile);
+        entries.replace(movedFile.getChecksum(), deletedFileID);
+        entries.remove(deletedFile.getChecksum());
 
-        entries.replace(movedFile.getFile(), newID);
-        entries.replace(deletedFile.getFile(), oldID);
+        movedFile.setID(deletedFileID);
 
-        movedFile.setID(newID);
-        deletedFile.setID(oldID);
-    }
+        // Clean old files
+        ConfigReader configReader = ConfigReader.getInstance();
 
-    @Override
-    protected void cleanDictionary() {
-        int fileID;
-        while ((fileID = exists.previousClearBit(entryIDs.size() - 1)) != -1) {
-            String deleted = entryIDs.get(fileID).getFile();
-            entries.remove(deleted);
-            entryIDs.remove(fileID);
-        }
+        File deleted;
+        deleted = new File(configReader.getStringDirColEnN() + deletedFile.getFile().replace(".html", ".txt"));
+        deleted.deleteOnExit();
+        deleted = new File(configReader.getStringDirColEnStop() + deletedFile.getFile().replace(".html", ".txt"));
+        deleted.deleteOnExit();
+        deleted = new File(configReader.getStringDirColEnStem() + deletedFile.getFile().replace(".html", ".txt"));
+        deleted.deleteOnExit();
     }
 
     @Override
@@ -118,6 +102,7 @@ public class FileDictionary extends Dictionary<IndexedFile> {
             try (FileOutputStream fos = new FileOutputStream(configReader.getStringDirIndex() + configReader.getStringFileDictionary());
                     ObjectOutputStream oos = new ObjectOutputStream(fos)) {
                 oos.writeObject(entryIDs);
+                oos.writeObject(entries);
             } catch (IOException ex) {
                 System.err.println(ex);
             }
@@ -125,32 +110,27 @@ public class FileDictionary extends Dictionary<IndexedFile> {
         }
     }
 
-    protected void isModified(int idFile) {
-        if (idFile <= bitsetSize) {
-            modified.set(idFile);
-        }
+    @Override
+    protected void doesExist(int idFile) {
+        entryIDs.get(idFile).doesExist();
     }
 
-    protected void isNotModified(int idFile) {
-        if (idFile <= bitsetSize) {
-            modified.clear(idFile);
-        }
+    @Override
+    protected void doesNotExist(int idFile) {
+        entryIDs.get(idFile).doesNotExist();
     }
 
-    protected boolean modified(int idFile) {
-        if (idFile <= bitsetSize) {
-            return modified.get(idFile);
-        } else {
-            return true;
-        }
+    @Override
+    protected boolean exists(int idFile) {
+        return entryIDs.get(idFile).exists();
     }
 
-    protected BitSet getModifiedBitset() {
-        return modified;
+    protected boolean isNew(int idFile) {
+        return entryIDs.get(idFile).isNew();
     }
 
-    protected void setModifiedBitset(BitSet bitset) {
-        modified = bitset;
+    protected boolean isNamed(int idFile) {
+        return entryIDs.get(idFile).isNamed();
     }
 
 }

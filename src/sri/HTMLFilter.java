@@ -10,6 +10,7 @@ import java.util.Set;
 import java.util.StringTokenizer;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
+import javafx.util.Pair;
 import org.jsoup.Jsoup;
 import org.jsoup.nodes.Document;
 import org.jsoup.select.Elements;
@@ -21,7 +22,7 @@ import org.tartarus.snowball.SnowballStemmer;
  */
 public interface HTMLFilter {
 
-    static public String filterEN(Path filePath) {
+    static public Pair<String, String> filterEN(Path filePath) {
 
         ConfigReader config = ConfigReader.getInstance();
 
@@ -36,34 +37,28 @@ public interface HTMLFilter {
         try {
             html = Jsoup.parse(f, null);
 
-            if (including == null) {
-                if (excluding == null) {
-                    content = html.getAllElements();
+            if (including.isEmpty()) {
+                if (excluding.isEmpty()) {
+                    content = html.getAllElements().not("title");
                 } else {
-                    content = html.getAllElements().not(excluding);
+                    content = html.getAllElements().not(excluding + ", title");
                 }
             } else {
-                if (excluding == null) {
+                if (excluding.isEmpty()) {
                     content = html.select(including);
                 } else {
                     content = html.select(including).not(excluding);
                 }
             }
 
-            if (page != null) {
+            if (!page.isEmpty()) {
                 if (!html.select("meta[property=og:url]").attr("content").contains(page)) {
                     return null;
                 }
             }
 
             if (!content.isEmpty()) {
-
-                if (including == null) {
-                    return content.text();
-                } else {
-                    return html.title() + "\n" + content.text();
-                }
-
+                return new Pair(html.title(), content.text());
             } else {
                 return null;
             }

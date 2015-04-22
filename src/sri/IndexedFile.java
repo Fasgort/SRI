@@ -10,22 +10,24 @@ public class IndexedFile implements Comparable<IndexedFile>, Serializable {
 
     private static final long serialVersionUID = -4509962320335592519L;
     private static int idNext = 0;
-    final private String file;
     private int idFile;
-    private long checksum = -1;
+    private final long checksum;
+    private String file;
+    private String title;
     private float norm = 0F;
+    private transient boolean exists = false;
+    private transient boolean isNew = false;
+    private transient boolean named = false;
 
-    protected IndexedFile(String _file) {
-        file = _file;
+    protected IndexedFile(long _checksum) {
+        checksum = _checksum;
         idFile = idNext++;
+        exists = true;
+        isNew = true;
     }
 
     protected static void setNextID(int _idNext) {
         idNext = _idNext;
-    }
-
-    protected String getFile() {
-        return file;
     }
 
     protected void setID(int _idFile) {
@@ -36,12 +38,25 @@ public class IndexedFile implements Comparable<IndexedFile>, Serializable {
         return idFile;
     }
 
-    protected void setChecksum(long _checksum) {
-        checksum = _checksum;
-    }
-
     protected long getChecksum() {
         return checksum;
+    }
+
+    protected void setFile(String _file) {
+        named = true;
+        file = _file;
+    }
+
+    protected String getFile() {
+        return file;
+    }
+
+    protected void setTitle(String _title) {
+        title = _title;
+    }
+
+    protected String getTitle() {
+        return title;
     }
 
     protected void setNorm(float _norm) {
@@ -50,6 +65,26 @@ public class IndexedFile implements Comparable<IndexedFile>, Serializable {
 
     protected float getNorm() {
         return norm;
+    }
+
+    protected void doesExist() {
+        exists = true;
+    }
+
+    protected void doesNotExist() {
+        exists = false;
+    }
+
+    protected boolean exists() {
+        return exists;
+    }
+
+    protected boolean isNew() {
+        return isNew;
+    }
+
+    protected boolean isNamed() {
+        return named;
     }
 
     @Override

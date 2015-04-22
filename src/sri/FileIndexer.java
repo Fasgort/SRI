@@ -12,6 +12,7 @@ import java.util.ArrayList;
 import java.util.Set;
 import java.util.zip.Adler32;
 import java.util.zip.Checksum;
+import javafx.util.Pair;
 
 /**
  *
@@ -70,15 +71,13 @@ public class FileIndexer implements Runnable {
         DataManager dataManager = DataManager.getInstance();
 
         ArrayList<String> tokenList;
-        Integer idFile = dataManager.searchFile(HTMLFileName);
-        Checksum checksum;
-        boolean modified = false;
+        Integer idFile;
 
         // Generar checksum
-        if (configReader.getSerialize()) {
+        {
+            Checksum checksum = new Adler32();
             try (InputStream fis = new FileInputStream(filePath.toString())) {
                 byte[] buffer = new byte[1024];
-                checksum = new Adler32();
                 int numRead;
                 do {
                     numRead = fis.read(buffer);
@@ -87,88 +86,92 @@ public class FileIndexer implements Runnable {
                     }
                 } while (numRead != -1);
 
-                // Comprobar diferencias en el archivo
-                if (!dataManager.checksumFile(idFile, checksum.getValue())) {
-                    modified = true;
-                    if (configReader.getDebug()) {
-                        System.out.println("File " + HTMLFileName + " was modified.");
-                    }
-                    dataManager.updateChecksumFile(idFile, checksum.getValue());
-                }
-
             } catch (IOException ex) {
                 System.err.println(ex);
             }
 
+            // Búsqueda y registro del fichero
+            idFile = dataManager.searchOrAddFile(checksum.getValue());
         }
         // Fin Checksum
 
-        if (modified || !configReader.getSerialize()) {
-
-            // Filtrado HTML
-            String textFiltered = HTMLFilter.filterEN(filePath);
-            if (textFiltered == null) {
-                dataManager.ignoreFile(idFile);
-                if (configReader.getDebug()) {
-                    System.out.println("File " + HTMLFileName + " was ignored and won't be included in the SE.");
-                    System.out.println("Renamed to " + HTMLFileName + ".nocontent");
-                }
-                File HTMLFile = filePath.toFile();
-                File ignored = new File(configReader.getStringDirColEn() + HTMLFileName + ".nocontent");
-                HTMLFile.renameTo(ignored);
-                return;
+        // Detección de copia
+        if (dataManager.isFileNamed(idFile)) {
+            if (configReader.getDebug()) {
+                System.out.println("The file " + HTMLFileName + " is a copy of " + dataManager.searchFile(idFile).getFile() + ".");
+                System.out.println("It's recommended to remove the file.");
+                System.out.println();
             }
+            return;
+        } else if (!dataManager.isFileNew(idFile)) {
+            dataManager.nameFile(idFile, HTMLFileName);
+            return;
+        }
 
-            tokenList = HTMLFilter.normalize(textFiltered);
-
-            File dirNorm = new File(configReader.getStringDirColEnN());
-            dirNorm.mkdir();
-            try (FileWriter wr = new FileWriter(configReader.getStringDirColEnN() + HTMLFileName.replace(".html", ".txt"))) {
-                for (String j : tokenList) {
-                    wr.write(j + "\n");
-                }
-            } catch (IOException ex) {
-                System.err.println(ex);
+        // Filtrado HTML
+        Pair<String, String> parsedHTML = HTMLFilter.filterEN(filePath);
+        if (parsedHTML == null) {
+            dataManager.ignoreFile(idFile);
+            if (configReader.getDebug()) {
+                System.out.println("File " + HTMLFileName + " was ignored and won't be included in the SE.");
+                System.out.println("It didn't return any content with the configured filter.");
+                System.out.println("It's recommended to remove the file or reconfigure the filter.");
+                System.out.println();
             }
+            return;
+        }
+
+        dataManager.updateFile(idFile, HTMLFileName, parsedHTML.getKey());
+        String textFiltered = parsedHTML.getKey() + "\n" + parsedHTML.getValue();
+
+        tokenList = HTMLFilter.normalize(textFiltered);
+
+        File dirNorm = new File(configReader.getStringDirColEnN());
+        dirNorm.mkdir();
+        try (FileWriter wr = new FileWriter(configReader.getStringDirColEnN() + HTMLFileName.replace(".html", ".txt"))) {
+            for (String j : tokenList) {
+                wr.write(j + "\n");
+            }
+        } catch (IOException ex) {
+            System.err.println(ex);
+        }
             // Fin Filtrado HTML
 
-            // Módulo Stopper
-            tokenList = HTMLFilter.stopper(tokenList, stopWordSet, configReader.getDirResources(), configReader.getStopWordFilename());
-            if (tokenList == null) {
-                return;
-            }
+        // Módulo Stopper
+        tokenList = HTMLFilter.stopper(tokenList, stopWordSet, configReader.getDirResources(), configReader.getStopWordFilename());
+        if (tokenList == null) {
+            return;
+        }
 
-            File dirStop = new File(configReader.getStringDirColEnStop());
-            dirStop.mkdir();
-            try (FileWriter wr = new FileWriter(configReader.getStringDirColEnStop() + HTMLFileName.replace(".html", ".txt"))) {
-                for (String j : tokenList) {
-                    wr.write(j + "\n");
-                }
-            } catch (IOException ex) {
-                System.err.println(ex);
+        File dirStop = new File(configReader.getStringDirColEnStop());
+        dirStop.mkdir();
+        try (FileWriter wr = new FileWriter(configReader.getStringDirColEnStop() + HTMLFileName.replace(".html", ".txt"))) {
+            for (String j : tokenList) {
+                wr.write(j + "\n");
             }
+        } catch (IOException ex) {
+            System.err.println(ex);
+        }
             // Fin Módulo Stopper
 
-            // Módulo Stemmer
-            tokenList = HTMLFilter.stemmer(tokenList);
-            if (tokenList == null) {
-                return;
-            }
-
-            File dirStem = new File(configReader.getStringDirColEnStem());
-            dirStem.mkdir();
-            try (FileWriter wr = new FileWriter(configReader.getStringDirColEnStem() + HTMLFileName.replace(".html", ".txt"))) {
-                for (String j : tokenList) {
-                    wr.write(j + "\n");
-                    Integer idWord = dataManager.searchWord(j);
-                    dataManager.addFrequency(idFile, idWord);
-                }
-            } catch (IOException ex) {
-                System.err.println(ex);
-            }
-            // Fin Módulo Stemmer
-
+        // Módulo Stemmer
+        tokenList = HTMLFilter.stemmer(tokenList);
+        if (tokenList == null) {
+            return;
         }
+
+        File dirStem = new File(configReader.getStringDirColEnStem());
+        dirStem.mkdir();
+        try (FileWriter wr = new FileWriter(configReader.getStringDirColEnStem() + HTMLFileName.replace(".html", ".txt"))) {
+            for (String j : tokenList) {
+                wr.write(j + "\n");
+                Integer idWord = dataManager.searchOrAddWord(j);
+                dataManager.addFrequency(idFile, idWord);
+            }
+        } catch (IOException ex) {
+            System.err.println(ex);
+        }
+        // Fin Módulo Stemmer
 
     }
 

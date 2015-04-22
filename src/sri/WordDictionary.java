@@ -7,8 +7,6 @@ import java.io.IOException;
 import java.io.ObjectInputStream;
 import java.io.ObjectOutputStream;
 import java.util.ArrayList;
-import java.util.BitSet;
-import java.util.Iterator;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.ConcurrentMap;
 
@@ -16,7 +14,7 @@ import java.util.concurrent.ConcurrentMap;
  *
  * @author Fasgort
  */
-public class WordDictionary extends Dictionary<IndexedWord> {
+public class WordDictionary extends Dictionary<IndexedWord, String> {
 
     private static volatile WordDictionary instance = null;
 
@@ -31,13 +29,7 @@ public class WordDictionary extends Dictionary<IndexedWord> {
             try (FileInputStream fis = new FileInputStream(serDictionary);
                     ObjectInputStream ois = new ObjectInputStream(fis)) {
                 wordIDs = (ArrayList<IndexedWord>) ois.readObject();
-                words = new ConcurrentHashMap(300);
-
-                Iterator<IndexedWord> it = wordIDs.iterator();
-                while (it.hasNext()) {
-                    IndexedWord iW = it.next();
-                    words.put(iW.getWord(), iW.getID());
-                }
+                words = (ConcurrentMap<String, Integer>) ois.readObject();
                 IndexedWord.setNextID(wordIDs.size());
             } catch (IOException | ClassNotFoundException ex) {
                 System.err.println(ex);
@@ -55,9 +47,6 @@ public class WordDictionary extends Dictionary<IndexedWord> {
         } else {
             entries = words;
         }
-
-        exists = new BitSet(entryIDs.size());
-        bitsetSize = entryIDs.size();
 
     }
 
@@ -78,32 +67,18 @@ public class WordDictionary extends Dictionary<IndexedWord> {
     }
 
     @Override
-    protected void move(int oldID, int newID) {
+    protected void replaceAndDelete(int oldID, int newID) {
         dirty = true;
-        IndexedWord movedWord = entryIDs.get(oldID);
-        IndexedWord deletedWord = entryIDs.get(newID);
+        IndexedWord movedFile = entryIDs.get(oldID);
+        IndexedWord deletedFile = entryIDs.get(newID);
 
-        entryIDs.remove(newID);
-        entryIDs.add(newID, movedWord);
-
+        entryIDs.set(newID, movedFile);
         entryIDs.remove(oldID);
-        entryIDs.add(oldID, deletedWord);
 
-        entries.replace(movedWord.getWord(), newID);
-        entries.replace(deletedWord.getWord(), oldID);
+        entries.replace(movedFile.getWord(), newID);
+        entries.remove(deletedFile.getWord());
 
-        movedWord.setID(newID);
-        deletedWord.setID(oldID);
-    }
-
-    @Override
-    protected void cleanDictionary() {
-        int wordID;
-        while ((wordID = exists.previousClearBit(entryIDs.size() - 1)) != -1) {
-            String deleted = entryIDs.get(wordID).getWord();
-            entries.remove(deleted);
-            entryIDs.remove(wordID);
-        }
+        movedFile.setID(newID);
     }
 
     @Override
@@ -116,11 +91,27 @@ public class WordDictionary extends Dictionary<IndexedWord> {
             try (FileOutputStream fos = new FileOutputStream(configReader.getStringDirIndex() + configReader.getStringWordDictionary());
                     ObjectOutputStream oos = new ObjectOutputStream(fos)) {
                 oos.writeObject(entryIDs);
+                oos.writeObject(entries);
             } catch (IOException ex) {
                 System.err.println(ex);
             }
 
         }
+    }
+
+    @Override
+    protected void doesExist(int idWord) {
+        entryIDs.get(idWord).doesExist();
+    }
+
+    @Override
+    protected void doesNotExist(int idWord) {
+        entryIDs.get(idWord).doesNotExist();
+    }
+
+    @Override
+    protected boolean exists(int idWord) {
+        return entryIDs.get(idWord).exists();
     }
 
 }
