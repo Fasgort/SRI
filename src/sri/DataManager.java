@@ -311,13 +311,14 @@ public class DataManager {
     }
 
     public void updateMatrixSize() {
-        if (fileDictionary.size() * 3 < frequencyIndex.rows() && wordDictionary.size() * 3 < frequencyIndex.columns()) {
-            resizeIndex(fileDictionary.size() * 2, wordDictionary.size() * 2);
+        if (fileDictionary.size() * 3 < frequencyIndex.rows() && wordDictionary.size() * 3 < frequencyIndex.columns()
+                && fileDictionary.size() * 1.5 >= 1024 && wordDictionary.size() * 1.5 >= 16384) {
+            resizeIndex((int) (fileDictionary.size() * 1.5), (int) (wordDictionary.size() * 1.5));
         } else {
-            if (fileDictionary.size() * 3 < frequencyIndex.rows()) {
+            if (fileDictionary.size() * 3 < frequencyIndex.rows() && fileDictionary.size() * 1.5 >= 1024) {
                 resizeIndex((int) (fileDictionary.size() * 1.5), frequencyIndex.columns());
             }
-            if (wordDictionary.size() * 3 < frequencyIndex.columns()) {
+            if (wordDictionary.size() * 3 < frequencyIndex.columns() && wordDictionary.size() * 1.5 >= 16384) {
                 resizeIndex(frequencyIndex.rows(), (int) (wordDictionary.size() * 1.5));
             }
         }
