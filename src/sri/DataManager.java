@@ -135,25 +135,22 @@ public class DataManager {
     public void nameFile(int idFile, String file) {
         IndexedFile iF = fileDictionary.search(idFile);
         iF.setFile(file);
-        synchronized (this) {
-            fileDictionary.doesExist(idFile);
-        }
+        fileDictionary.doesExist(idFile);
     }
 
     public void updateFile(int idFile, String file, String title) {
         IndexedFile iF = fileDictionary.search(idFile);
         iF.setFile(file);
         iF.setTitle(title);
-        synchronized (this) {
-            fileDictionary.doesExist(idFile);
-        }
+        fileDictionary.doesExist(idFile);
     }
 
-    public synchronized void ignoreFile(int idFile) {
+    public void ignoreFile(int idFile) {
         fileDictionary.doesNotExist(idFile);
     }
 
     public synchronized void addFrequency(int idFile, int idWord) {
+        searchWord(idWord).sumFrequency(1);
         int count = frequencyIndex.getQuick(idFile, idWord);
         frequencyIndex.setQuick(idFile, idWord, count + 1);
     }
@@ -403,7 +400,7 @@ public class DataManager {
         int minFrequency = 0;
         while (itw.hasNext()) {
             IndexedWord wordA = itw.next();
-            int wordAFrequency = frequencyIndex.viewColumn(wordA.getID()).zSum();
+            int wordAFrequency = wordA.getFrequency();
             if (wordAFrequency > minFrequency || list.size() < sizeList) {
                 if (list.size() == 0) {
                     list.add(new Pair(wordA, wordAFrequency));

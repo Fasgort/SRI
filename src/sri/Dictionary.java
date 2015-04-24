@@ -25,7 +25,7 @@ public abstract class Dictionary<T1, T2> {
         return idEntry;
     }
 
-    protected synchronized T1 search(int idEntry) {
+    protected T1 search(int idEntry) {
         if (idEntry < entryIDs.size()) {
             return entryIDs.get(idEntry);
         } else {

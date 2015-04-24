@@ -14,6 +14,7 @@ public class IndexedWord implements Comparable<IndexedWord>, Serializable {
     private int idWord;
     private float idf;
     private int documentCount;
+    private int frequency;
     private transient boolean exists = false;
 
     protected IndexedWord(String _word) {
@@ -21,6 +22,7 @@ public class IndexedWord implements Comparable<IndexedWord>, Serializable {
         idWord = idNext++;
         idf = 0F;
         documentCount = 0;
+        frequency = 0;
     }
 
     protected static void setNextID(int _idNext) {
@@ -53,6 +55,18 @@ public class IndexedWord implements Comparable<IndexedWord>, Serializable {
 
     public int getDocumentCount() {
         return documentCount;
+    }
+
+    public int getFrequency() {
+        return frequency;
+    }
+
+    public void sumFrequency(int sum) {
+        frequency += sum;
+    }
+
+    public void lessFrequency(int less) {
+        frequency -= less;
     }
 
     protected void doesExist() {
