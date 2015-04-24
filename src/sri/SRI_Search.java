@@ -7,6 +7,9 @@ import java.io.IOException;
 import java.util.ArrayList;
 import java.util.HashSet;
 import java.util.Set;
+import java.util.concurrent.ExecutorService;
+import java.util.concurrent.Executors;
+import java.util.concurrent.TimeUnit;
 
 /**
  *
@@ -32,12 +35,10 @@ public class SRI_Search {
         }
 
         // DATA STRUCTURES
-        DataManager dataManager = DataManager.getInstance();
         Set<String> stopWordSet = new HashSet(1000); // Stop Word Dictionary
 
         // Lectura del fichero de consultas
         ArrayList<String> searchList = new ArrayList();
-        ArrayList<String> tokenList;
 
         // Función localizada
         {
@@ -56,21 +57,18 @@ public class SRI_Search {
 
         }
 
-        for (String searchString : searchList) {
-            System.out.println("Search input was: \"" + searchString + "\"");
-            System.out.println();
+        // Procesamiento multithread
+        ExecutorService exec = Executors.newFixedThreadPool(Runtime.getRuntime().availableProcessors());
 
-            // Módulo Normalize
-            tokenList = HTMLFilter.normalize(searchString);
+        searchList.stream().map((searchString) -> new SearchThread(stopWordSet, searchString)).forEach((searchThread) -> {
+            exec.execute(searchThread);
+        });
 
-            // Módulo Stopper
-            tokenList = HTMLFilter.stopper(tokenList, stopWordSet, configReader.getDirResources(), configReader.getStopWordFilename());
-
-            // Módulo Stemmer
-            tokenList = HTMLFilter.stemmer(tokenList);
-
-            // Búsqueda
-            dataManager.searchResults(tokenList);
+        try {
+            exec.shutdown();
+            exec.awaitTermination(5, TimeUnit.MINUTES);
+        } catch (InterruptedException ex) {
+            System.err.println(ex);
         }
 
         // Fin de operaciónes

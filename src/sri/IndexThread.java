@@ -18,12 +18,12 @@ import javafx.util.Pair;
  *
  * @author Fasgort
  */
-public class FileIndexer implements Runnable {
+public class IndexThread implements Runnable {
 
     private final Set<String> stopWordSet;
     private String HTMLFileName;
 
-    public FileIndexer(Set<String> stopWord, String filename) {
+    public IndexThread(Set<String> stopWord, String filename) {
         stopWordSet = stopWord;
         HTMLFileName = filename;
     }
@@ -126,16 +126,18 @@ public class FileIndexer implements Runnable {
 
         tokenList = HTMLFilter.normalize(textFiltered);
 
-        File dirNorm = new File(configReader.getStringDirColEnN());
-        dirNorm.mkdir();
-        try (FileWriter wr = new FileWriter(configReader.getStringDirColEnN() + HTMLFileName.replace(".html", ".txt"))) {
-            for (String j : tokenList) {
-                wr.write(j + "\n");
+        if (configReader.getWriteMidFiles()) {
+            File dirNorm = new File(configReader.getStringDirColEnN());
+            dirNorm.mkdir();
+            try (FileWriter wr = new FileWriter(configReader.getStringDirColEnN() + HTMLFileName.replace(".html", ".txt"))) {
+                for (String j : tokenList) {
+                    wr.write(j + "\n");
+                }
+            } catch (IOException ex) {
+                System.err.println(ex);
             }
-        } catch (IOException ex) {
-            System.err.println(ex);
         }
-            // Fin Filtrado HTML
+        // Fin Filtrado HTML
 
         // Módulo Stopper
         tokenList = HTMLFilter.stopper(tokenList, stopWordSet, configReader.getDirResources(), configReader.getStopWordFilename());
@@ -143,16 +145,18 @@ public class FileIndexer implements Runnable {
             return;
         }
 
-        File dirStop = new File(configReader.getStringDirColEnStop());
-        dirStop.mkdir();
-        try (FileWriter wr = new FileWriter(configReader.getStringDirColEnStop() + HTMLFileName.replace(".html", ".txt"))) {
-            for (String j : tokenList) {
-                wr.write(j + "\n");
+        if (configReader.getWriteMidFiles()) {
+            File dirStop = new File(configReader.getStringDirColEnStop());
+            dirStop.mkdir();
+            try (FileWriter wr = new FileWriter(configReader.getStringDirColEnStop() + HTMLFileName.replace(".html", ".txt"))) {
+                for (String j : tokenList) {
+                    wr.write(j + "\n");
+                }
+            } catch (IOException ex) {
+                System.err.println(ex);
             }
-        } catch (IOException ex) {
-            System.err.println(ex);
         }
-            // Fin Módulo Stopper
+        // Fin Módulo Stopper
 
         // Módulo Stemmer
         tokenList = HTMLFilter.stemmer(tokenList);
@@ -160,16 +164,23 @@ public class FileIndexer implements Runnable {
             return;
         }
 
-        File dirStem = new File(configReader.getStringDirColEnStem());
-        dirStem.mkdir();
-        try (FileWriter wr = new FileWriter(configReader.getStringDirColEnStem() + HTMLFileName.replace(".html", ".txt"))) {
+        if (configReader.getWriteMidFiles()) {
+            File dirStem = new File(configReader.getStringDirColEnStem());
+            dirStem.mkdir();
+            try (FileWriter wr = new FileWriter(configReader.getStringDirColEnStem() + HTMLFileName.replace(".html", ".txt"))) {
+                for (String j : tokenList) {
+                    wr.write(j + "\n");
+                    Integer idWord = dataManager.searchOrAddWord(j);
+                    dataManager.addFrequency(idFile, idWord);
+                }
+            } catch (IOException ex) {
+                System.err.println(ex);
+            }
+        } else {
             for (String j : tokenList) {
-                wr.write(j + "\n");
                 Integer idWord = dataManager.searchOrAddWord(j);
                 dataManager.addFrequency(idFile, idWord);
             }
-        } catch (IOException ex) {
-            System.err.println(ex);
         }
         // Fin Módulo Stemmer
 

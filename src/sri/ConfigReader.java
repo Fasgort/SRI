@@ -19,7 +19,9 @@ public class ConfigReader {
     private boolean read = false;
     private String debug = null;
     private String serialize = null;
+    private String writeMidFiles = null;
     private String documentsRecovered = null;
+    private String minSimilitude = null;
     private String filterInclude = null;
     private String filterExclude = null;
     private String filterFromPage = null;
@@ -65,8 +67,14 @@ public class ConfigReader {
                         case "serialize":
                             serialize = valor;
                             break;
+                        case "writeMidFiles":
+                            writeMidFiles = valor;
+                            break;
                         case "documentsRecovered":
                             documentsRecovered = valor;
+                            break;
+                        case "minSimilitude":
+                            minSimilitude = valor;
                             break;
                         case "filterInclude":
                             filterInclude = valor;
@@ -148,116 +156,136 @@ public class ConfigReader {
 
                 if (debug == null || (debug.compareToIgnoreCase("true") != 0 && debug.compareToIgnoreCase("false") != 0)) {
                     debug = "false";
-                    bw.append("debug = " + debug);
+                    bw.append("debug = " + debug + " // Shows some debug messages in the console, while executing.");
                     bw.newLine();
                 }
 
                 if (serialize == null || (serialize.compareToIgnoreCase("true") != 0 && serialize.compareToIgnoreCase("false") != 0)) {
                     serialize = "true";
-                    bw.append("serialize = " + serialize);
+                    bw.append("serialize = " + serialize + " // Serialize the index, loading it back at the start. (Saves time)");
+                    bw.newLine();
+                }
+
+                if (writeMidFiles == null || (writeMidFiles.compareToIgnoreCase("true") != 0 && writeMidFiles.compareToIgnoreCase("false") != 0)) {
+                    writeMidFiles = "false";
+                    bw.append("writeMidFiles = " + writeMidFiles + " // Write the in-middle results from the HTML filter modules. Recommended only for debug purposes.");
                     bw.newLine();
                 }
 
                 if (documentsRecovered == null) {
                     documentsRecovered = "5";
-                    bw.append("documentsRecovered = " + documentsRecovered);
+                    bw.append("documentsRecovered = " + documentsRecovered + " // Max number of results in the search.");
                     bw.newLine();
                 } else {
                     try {
                         Integer.parseInt(documentsRecovered);
                     } catch (NumberFormatException ex) {
                         documentsRecovered = "5";
-                        bw.append("documentsRecovered = " + documentsRecovered);
+                        bw.append("documentsRecovered = " + documentsRecovered + " // Max number of results in the search.");
+                        bw.newLine();
+                    }
+                }
+
+                if (minSimilitude == null) {
+                    minSimilitude = "0.001F";
+                    bw.append("minSimilitude = " + minSimilitude + " // From 0.0F to 1.0F range. Filter results that are lower.");
+                    bw.newLine();
+                } else {
+                    try {
+                        Float.parseFloat(minSimilitude);
+                    } catch (NumberFormatException ex) {
+                        minSimilitude = "0.3F";
+                        bw.append("minSimilitude = " + minSimilitude + " // From 0.0 to 1.0 range. Filter results that are lower.");
                         bw.newLine();
                     }
                 }
 
                 if (filterInclude == null) {
                     filterInclude = "";
-                    bw.append("filterInclude = \"\"");
+                    bw.append("filterInclude = \"\" // CSS Query search for the content included in the index.");
                     bw.newLine();
                 }
 
                 if (filterExclude == null) {
                     filterExclude = "";
-                    bw.append("filterExclude = \"\"");
+                    bw.append("filterExclude = \"\" // CSS Query search for the content excluded in the index.");
                     bw.newLine();
                 }
 
                 if (filterFromPage == null) {
                     filterFromPage = "";
-                    bw.append("filterFromPage = \"\"");
+                    bw.append("filterFromPage = \"\" // CSS Query search for the content included in the index, only accepting content from this URL.");
                     bw.newLine();
                 }
 
                 if (dirResources == null) {
-                    dirResources = "./resources/";
+                    dirResources = "./resources/ // Directory where resources are found.";
                     bw.append("dirResources = " + dirResources);
                     bw.newLine();
                 }
 
                 if (stringDirColEn == null) {
-                    stringDirColEn = "./coleccionEn/";
+                    stringDirColEn = "./coleccionEn/ // Directory where coleccionEn files are found.";
                     bw.append("stringDirColEn = " + stringDirColEn);
                     bw.newLine();
                 }
 
                 if (stringDirColEnN == null) {
-                    stringDirColEnN = "./coleccionEnNormalized/";
+                    stringDirColEnN = "./coleccionEnNormalized/ // Directory where in-middle results from normalizing module are saved.";
                     bw.append("stringDirColEnN = " + stringDirColEnN);
                     bw.newLine();
                 }
 
                 if (stringDirColEnStop == null) {
-                    stringDirColEnStop = "./coleccionEnStopped/";
+                    stringDirColEnStop = "./coleccionEnStopped/ // Directory where in-middle results from stopping module are saved.";
                     bw.append("stringDirColEnStop = " + stringDirColEnStop);
                     bw.newLine();
                 }
 
                 if (stringDirColEnStem == null) {
-                    stringDirColEnStem = "./coleccionEnStemmed/";
+                    stringDirColEnStem = "./coleccionEnStemmed/ // Directory where in-middle results from stemming module are saved.";
                     bw.append("stringDirColEnStem = " + stringDirColEnStem);
                     bw.newLine();
                 }
 
                 if (stringDirIndex == null) {
-                    stringDirIndex = "./index/";
+                    stringDirIndex = "./index/ // Directory where index files are saved.";
                     bw.append("stringDirIndex = " + stringDirIndex);
                     bw.newLine();
                 }
 
                 if (stopWordFilename == null) {
-                    stopWordFilename = "englishST.txt";
+                    stopWordFilename = "englishST.txt // Name of the file containing the empty english words. Must be located in the resources directory.";
                     bw.append("stopWordFilename = " + stopWordFilename);
                     bw.newLine();
                 }
 
                 if (stringFileDictionary == null) {
-                    stringFileDictionary = "fileDictionary.ser";
+                    stringFileDictionary = "fileDictionary.ser // Name of fileDictionary file. It will be located in the resources directory.";
                     bw.append("stringFileDictionary = " + stringFileDictionary);
                     bw.newLine();
                 }
 
                 if (stringWordDictionary == null) {
-                    stringWordDictionary = "wordDictionary.ser";
+                    stringWordDictionary = "wordDictionary.ser // Name of wordDictionary file. It will be located in the resources directory.";
                     bw.append("stringWordDictionary = " + stringWordDictionary);
                     bw.newLine();
                 }
 
                 if (stringFrequencyIndex == null) {
-                    stringFrequencyIndex = "frequencyIndex.ser";
+                    stringFrequencyIndex = "frequencyIndex.ser // Name of frequencyIndex file. It will be located in the resources directory.";
                     bw.append("stringFrequencyIndex = " + stringFrequencyIndex);
                     bw.newLine();
                 }
 
                 if (stringWeightIndex == null) {
-                    stringWeightIndex = "weightIndex.ser";
+                    stringWeightIndex = "weightIndex.ser // Name of weightIndex file. It will be located in the resources directory.";
                     bw.append("stringWeightIndex = " + stringWeightIndex);
                     bw.newLine();
                 }
 
                 if (stringSearchFile == null) {
-                    stringSearchFile = "consultas.txt";
+                    stringSearchFile = "consultas.txt // Name of the search query file. Must be located in the same directory as the executable.";
                     bw.append("stringSearchFile = " + stringSearchFile);
                     bw.newLine();
                 }
@@ -279,8 +307,16 @@ public class ConfigReader {
         return Boolean.parseBoolean(serialize);
     }
 
+    public boolean getWriteMidFiles() {
+        return Boolean.parseBoolean(writeMidFiles);
+    }
+
     public int getDocumentsRecovered() {
         return Integer.parseInt(documentsRecovered);
+    }
+
+    public float getMinSimilitude() {
+        return Float.parseFloat(minSimilitude);
     }
 
     public String getFilterInclude() {

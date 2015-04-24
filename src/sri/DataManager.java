@@ -2,7 +2,10 @@ package sri;
 
 import cern.colt.list.tfloat.FloatArrayList;
 import cern.colt.list.tint.IntArrayList;
+import cern.colt.matrix.tfloat.FloatMatrix1D;
+import cern.colt.matrix.tfloat.impl.SparseFloatMatrix1D;
 import cern.colt.matrix.tfloat.impl.SparseFloatMatrix2D;
+import cern.colt.matrix.tint.IntMatrix1D;
 import cern.colt.matrix.tint.impl.SparseIntMatrix2D;
 import java.io.File;
 import java.io.FileInputStream;
@@ -217,24 +220,43 @@ public class DataManager {
 
         for (int fileID = 0; fileID < entryIDs.size(); fileID++) {
             IndexedFile iF = entryIDs.get(fileID);
+            IntMatrix1D viewFrequencyFileColumn = frequencyIndex.viewRow(iF.getID());
+            FloatMatrix1D viewWeightFileColumn = weightIndex.viewRow(iF.getID());
             if (!iF.exists()) {
+                indexModified = true;
                 IndexedFile iF2 = entryIDs.get(entryIDs.size() - 1);
+                IntMatrix1D viewFrequencyFileColumn2 = frequencyIndex.viewRow(iF2.getID());
+                FloatMatrix1D viewWeightFileColumn2 = weightIndex.viewRow(iF2.getID());
                 while (!iF2.exists()) {
                     entryIDs.remove(iF2.getID());
                     entries.remove(iF2.getChecksum());
-                    frequencyIndex.viewPart(iF2.getID(), 0, 1, wordDictionary.size()).assign(0);
-                    weightIndex.viewPart(iF2.getID(), 0, 1, wordDictionary.size()).assign(0F);
+                    for (int i = 0; i < wordDictionary.size(); i++) {
+                        int frequency = frequencyIndex.getQuick(iF2.getID(), i);
+                        if (frequency != 0) {
+                            viewFrequencyFileColumn2.setQuick(i, 0);
+                            viewWeightFileColumn2.setQuick(i, 0F);
+                            searchWord(i).lessFrequency(frequency);
+                        }
+                    }
                     fileDictionary.setDirty();
+
                     if (iF2 == iF) {
-                        System.out.println(entryIDs.size());
                         return;
                     }
                     iF2 = entryIDs.get(entryIDs.size() - 1);
+                    viewFrequencyFileColumn2 = frequencyIndex.viewRow(iF2.getID());
+                    viewWeightFileColumn2 = weightIndex.viewRow(iF2.getID());
                 }
-                frequencyIndex.viewPart(iF.getID(), 0, 1, wordDictionary.size()).assign(frequencyIndex.viewPart(iF2.getID(), 0, 1, wordDictionary.size()));
-                weightIndex.viewPart(iF.getID(), 0, 1, wordDictionary.size()).assign(weightIndex.viewPart(iF2.getID(), 0, 1, wordDictionary.size()));
-                frequencyIndex.viewPart(iF2.getID(), 0, 1, wordDictionary.size()).assign(0);
-                weightIndex.viewPart(iF2.getID(), 0, 1, wordDictionary.size()).assign(0F);
+                for (int i = 0; i < wordDictionary.size(); i++) {
+                    int frequency = viewFrequencyFileColumn.getQuick(i);
+                    if (frequency != 0) {
+                        searchWord(i).lessFrequency(frequency);
+                    }
+                }
+                viewFrequencyFileColumn.viewPart(0, wordDictionary.size()).assign(viewFrequencyFileColumn2.viewPart(0, wordDictionary.size()));
+                viewWeightFileColumn.viewPart(0, wordDictionary.size()).assign(viewWeightFileColumn2.viewPart(0, wordDictionary.size()));
+                viewFrequencyFileColumn2.viewPart(0, wordDictionary.size()).assign(0);
+                viewWeightFileColumn2.viewPart(0, wordDictionary.size()).assign(0F);
                 fileDictionary.replaceAndDelete(iF2.getID(), iF.getID());
             }
         }
@@ -244,7 +266,8 @@ public class DataManager {
         Iterator<IndexedWord> itw = wordDictionary.iterator();
         while (itw.hasNext()) {
             IndexedWord iW = itw.next();
-            iW.setDocumentCount(frequencyIndex.viewPart(0, iW.getID(), fileDictionary.size(), 1).cardinality());
+            IntMatrix1D viewFrequencyWordColumn = frequencyIndex.viewColumn(iW.getID());
+            iW.setDocumentCount(viewFrequencyWordColumn.viewPart(0, fileDictionary.size()).cardinality());
             if (iW.getDocumentCount() != 0) {
                 iW.doesExist();
             }
@@ -257,23 +280,30 @@ public class DataManager {
 
         for (int wordID = 0; wordID < entryIDs.size(); wordID++) {
             IndexedWord iW = entryIDs.get(wordID);
+            IntMatrix1D viewFrequencyWordColumn = frequencyIndex.viewColumn(iW.getID());
+            FloatMatrix1D viewWeightWordColumn = weightIndex.viewColumn(iW.getID());
             if (!iW.exists()) {
+                indexModified = true;
                 IndexedWord iW2 = entryIDs.get(entryIDs.size() - 1);
+                IntMatrix1D viewFrequencyWordColumn2 = frequencyIndex.viewColumn(iW2.getID());
+                FloatMatrix1D viewWeightWordColumn2 = weightIndex.viewColumn(iW2.getID());
                 while (!iW2.exists()) {
                     entryIDs.remove(iW2.getID());
                     entries.remove(iW2.getWord());
-                    frequencyIndex.viewPart(0, iW2.getID(), fileDictionary.size(), 1).assign(0);
-                    weightIndex.viewPart(0, iW2.getID(), fileDictionary.size(), 1).assign(0F);
+                    viewFrequencyWordColumn2.viewPart(0, fileDictionary.size()).assign(0);
+                    viewWeightWordColumn2.viewPart(0, fileDictionary.size()).assign(0F);
                     wordDictionary.setDirty();
                     if (iW2 == iW) {
                         return;
                     }
                     iW2 = entryIDs.get(entryIDs.size() - 1);
+                    viewFrequencyWordColumn2 = frequencyIndex.viewColumn(iW2.getID());
+                    viewWeightWordColumn2 = weightIndex.viewColumn(iW2.getID());
                 }
-                frequencyIndex.viewPart(0, iW.getID(), fileDictionary.size(), 1).assign(frequencyIndex.viewPart(0, iW.getID(), fileDictionary.size(), 1));
-                weightIndex.viewPart(0, iW.getID(), fileDictionary.size(), 1).assign(weightIndex.viewPart(0, iW.getID(), fileDictionary.size(), 1));
-                frequencyIndex.viewPart(0, iW2.getID(), fileDictionary.size(), 1).assign(0);
-                weightIndex.viewPart(0, iW2.getID(), fileDictionary.size(), 1).assign(0F);
+                viewFrequencyWordColumn.viewPart(0, fileDictionary.size()).assign(viewFrequencyWordColumn2.viewPart(0, fileDictionary.size()));
+                viewWeightWordColumn.viewPart(0, fileDictionary.size()).assign(viewWeightWordColumn2.viewPart(0, fileDictionary.size()));
+                viewFrequencyWordColumn2.viewPart(0, fileDictionary.size()).assign(0);
+                viewWeightWordColumn2.viewPart(0, fileDictionary.size()).assign(0F);
                 wordDictionary.replaceAndDelete(iW2.getID(), iW.getID());
             }
         }
@@ -318,26 +348,31 @@ public class DataManager {
         Iterator<IndexedFile> itf = fileDictionary.iterator();
         while (itf.hasNext()) {
             IndexedFile iF = itf.next();
+            IntMatrix1D viewFrequencyFileRow = frequencyIndex.viewRow(iF.getID());
+            FloatMatrix1D viewWeightFileRow = weightIndex.viewRow(iF.getID());
 
             Iterator<IndexedWord> itw = wordDictionary.iterator();
-            int maxFrequency = frequencyIndex.viewPart(iF.getID(), 0, 1, wordDictionary.size()).getMaxLocation()[0];
+            int maxFrequency = viewFrequencyFileRow.viewPart(0, wordDictionary.size()).getMaxLocation()[0];
             float normFile = 0F;
             while (itw.hasNext()) {
                 IndexedWord iW = itw.next();
-                float fileFrequency = frequencyIndex.getQuick(iF.getID(), iW.getID()) / (float) maxFrequency;
+                float fileFrequency = viewFrequencyFileRow.getQuick(iW.getID()) / (float) maxFrequency;
                 float weight = fileFrequency * iW.getIDF();
-                normFile += (float) pow(weight, 2);
-                weightIndex.setQuick(iF.getID(), iW.getID(), weight);
+                if (weight == 0F) {
+                    continue;
+                }
+                normFile += pow(weight, 2);
+                viewWeightFileRow.setQuick(iW.getID(), weight);
             }
             normFile = (float) sqrt(normFile);
             iF.setNorm(normFile);
             itw = wordDictionary.iterator();
             while (itw.hasNext()) {
                 IndexedWord iW = itw.next();
-                float weight = weightIndex.getQuick(iF.getID(), iW.getID());
+                float weight = viewWeightFileRow.getQuick(iW.getID());
                 if (weight != 0F) {
                     float normWeight = weight / normFile;
-                    weightIndex.setQuick(iF.getID(), iW.getID(), normWeight);
+                    viewWeightFileRow.setQuick(iW.getID(), normWeight);
                 }
             }
         }
@@ -346,9 +381,10 @@ public class DataManager {
     public void generateIndex() {
         ConfigReader configReader = ConfigReader.getInstance();
 
+        processFileDictionary();
+        processWordDictionary();
+
         if (indexModified) {
-            processFileDictionary();
-            processWordDictionary();
             updateMatrixSize();
             generateIDF();
             generateWeight();
@@ -438,24 +474,24 @@ public class DataManager {
 
     }
 
-    public void searchResults(ArrayList<String> tokenList) {
+    public void searchResults(String searchString, ArrayList<String> tokenList) {
         ConfigReader configReader = ConfigReader.getInstance();
 
         int sizeResult = configReader.getDocumentsRecovered();
 
         if (sizeResult <= 0) {
-            System.out.println("You silly. You asked for no results or even a negative number of them.");
-            return;
+            sizeResult = 5;
         }
 
         if (sizeResult > fileDictionary.size()) {
             sizeResult = fileDictionary.size();
         }
 
-        SparseFloatMatrix2D searchWeight = new SparseFloatMatrix2D(1, wordDictionary.size());
+        SparseFloatMatrix1D searchWeight = new SparseFloatMatrix1D(wordDictionary.size());
         ArrayList<IndexedWord> searchWords = new ArrayList(tokenList.size());
 
         Iterator<String> it = tokenList.iterator();
+        float normSearch = 0F;
 
         while (it.hasNext()) {
             String word = it.next();
@@ -463,28 +499,54 @@ public class DataManager {
             if (idWord != -1) {
                 IndexedWord iW = wordDictionary.search(idWord);
                 searchWords.add(iW);
-                searchWeight.setQuick(0, idWord, iW.getIDF());
+                searchWeight.setQuick(idWord, iW.getIDF());
+                normSearch += pow(iW.getIDF(), 2);
+            }
+        }
+        normSearch = (float) sqrt(normSearch);
+        for (IndexedWord iW : searchWords) {
+            float weight = searchWeight.getQuick(iW.getID());
+            if (weight != 0F) {
+                float normWeight = weight / normSearch;
+                searchWeight.setQuick(iW.getID(), normWeight);
             }
         }
 
         if (searchWeight.cardinality() == 0) {
-            System.out.println("No documents were found.");
+            synchronized (this) {
+                System.out.println("Search input was: \"" + searchString + "\"");
+                System.out.println("No documents were found.");
+                System.out.println();
+            }
             return;
         }
 
         LinkedList<Pair<IndexedFile, Float>> list = new LinkedList();
         Iterator<IndexedFile> itf = fileDictionary.iterator();
 
-        float minSimilitude = 0F;
+        float minSimilitude = configReader.getMinSimilitude();
         while (itf.hasNext()) {
             IndexedFile iF = itf.next();
+            FloatMatrix1D viewRow = weightIndex.viewRow(iF.getID());
+            float weightIndexed;
+            float weightSearched;
             float similitude = 0F;
+            float normFile = iF.getNorm();
             Iterator<IndexedWord> itw = searchWords.iterator();
             while (itw.hasNext()) {
                 IndexedWord iW = itw.next();
-                similitude += weightIndex.getQuick(iF.getID(), iW.getID()) * searchWeight.getQuick(0, iW.getID());
+                weightIndexed = viewRow.getQuick(iW.getID());
+                weightSearched = searchWeight.getQuick(iW.getID());
+                similitude += weightIndexed * weightSearched;
             }
-            if (similitude > minSimilitude || list.size() < sizeResult) {
+
+            if (similitude == 0F) {
+                continue;
+            }
+
+            similitude = similitude / (normFile * normSearch);
+
+            if (similitude > minSimilitude) {
                 if (list.size() == 0) {
                     list.add(new Pair(iF, similitude));
                 } else {
@@ -512,17 +574,32 @@ public class DataManager {
             }
         }
 
-        System.out.println("Relevant documents ordered by similitude:");
-
-        for (int i = 0; i < sizeResult; i++) {
-            Pair<IndexedFile, Float> result = list.removeFirst();
-            if (result.getValue() != 0F) {
-                System.out.println("    " + (i + 1) + ": " + result.getKey().getTitle());
-                System.out.println("    " + "File is named \"" + result.getKey().getFile() + "\" and has \"" + result.getValue() + "\" similitude value.");
+        if (list.size() == 0) {
+            synchronized (this) {
+                System.out.println("Search input was: \"" + searchString + "\"");
+                System.out.println("No documents were found.");
                 System.out.println();
             }
+            return;
         }
-        System.out.println();
+
+        synchronized (this) {
+            System.out.println("Search input was: \"" + searchString + "\"");
+
+            System.out.println("Relevant documents ordered by similitude:");
+
+            sizeResult = list.size();
+
+            for (int i = 0; i < sizeResult; i++) {
+                Pair<IndexedFile, Float> result = list.removeFirst();
+                if (result.getValue() != 0F) {
+                    System.out.println("    " + (i + 1) + ": " + result.getKey().getTitle());
+                    System.out.println("    " + "File is named \"" + result.getKey().getFile() + "\" and has \"" + result.getValue() + "\" similitude value.");
+                    System.out.println();
+                }
+            }
+            System.out.println();
+        }
 
     }
 

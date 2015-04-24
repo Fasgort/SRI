@@ -67,7 +67,7 @@ public class SRI_Indexer {
             ExecutorService exec = Executors.newFixedThreadPool(Runtime.getRuntime().availableProcessors());
 
             for (String HTMLFileName : arrayHTMLFiles) {
-                Runnable documentThread = new FileIndexer(stopWordSet, HTMLFileName);
+                Runnable documentThread = new IndexThread(stopWordSet, HTMLFileName);
                 exec.execute(documentThread);
             }
 

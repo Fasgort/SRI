@@ -1,23 +1,25 @@
 ﻿// Parámetros
-debug = true
-serialize = true
-documentsRecovered = 5
-filterInclude = ".article-content > p"
-filterExclude = ".post-meta, .read-more"
-filterFromPage = "engadget.com/"
+debug = true // Shows some debug messages in the console, while executing.
+serialize = true // Serialize the index, loading it back at the start (Saves time).
+writeMidFiles = false // Write the in-middle results from the HTML filter modules. Recommended only for debug purposes.
+documentsRecovered = 5 // Max number of results in the search.
+minSimilitude = 0.001F // From 0.0F to 1.0F range. Filter results that are lower.
+filterInclude = ".article-content > p" // CSS Query search for the content included in the index.
+filterExclude = ".post-meta, .read-more" // CSS Query search for the content excluded in the index.
+filterFromPage = "engadget.com/" // CSS Query search for the content included in the index, only accepting content from this URL.
 
 // Directorios
-dirResources = ./resources/
-stringDirColEn = ./coleccionEn/
-stringDirColEnN = ./coleccionEnNormalized/
-stringDirColEnStop = ./coleccionEnStopped/
-stringDirColEnStem = ./coleccionEnStemmed/
-stringDirIndex = ./index/
+dirResources = ./resources/ // Directory where resources are found.
+stringDirColEn = ./coleccionEn/ // Directory where coleccionEn files are found.
+stringDirColEnN = ./coleccionEnNormalized/ // Directory where in-middle results from normalizing module are saved.
+stringDirColEnStop = ./coleccionEnStopped/ // Directory where in-middle results from stopping module are saved.
+stringDirColEnStem = ./coleccionEnStemmed/ // Directory where in-middle results from stemming module are saved.
+stringDirIndex = ./index/ // Directory where index files are saved.
 
 // Ficheros
-stopWordFilename = englishST.txt
-stringFileDictionary = fileDictionary.ser
-stringWordDictionary = wordDictionary.ser
-stringFrequencyIndex = frequencyIndex.ser
-stringWeightIndex = weightIndex.ser
-stringSearchFile = consultas.txt
+stopWordFilename = englishST.txt // Name of the file containing the empty english words. Must be located in the resources directory.
+stringFileDictionary = fileDictionary.ser // Name of fileDictionary file. It will be located in the resources directory.
+stringWordDictionary = wordDictionary.ser // Name of wordDictionary file. It will be located in the resources directory.
+stringFrequencyIndex = frequencyIndex.ser // Name of frequencyIndex file. It will be located in the resources directory.
+stringWeightIndex = weightIndex.ser // Name of weightIndex file. It will be located in the resources directory.
+stringSearchFile = consultas.txt // Name of the search query file. Must be located in the same directory as the executable.
