@@ -219,74 +219,74 @@ public class ConfigReader {
                 }
 
                 if (dirResources == null) {
-                    dirResources = "./resources/ // Directory where resources are found.";
-                    bw.append("dirResources = " + dirResources);
+                    dirResources = "./resources/";
+                    bw.append("dirResources = " + dirResources + " // Directory where resources are found.");
                     bw.newLine();
                 }
 
                 if (stringDirColEn == null) {
-                    stringDirColEn = "./coleccionEn/ // Directory where coleccionEn files are found.";
-                    bw.append("stringDirColEn = " + stringDirColEn);
+                    stringDirColEn = "./coleccionEn/";
+                    bw.append("stringDirColEn = " + stringDirColEn + " // Directory where coleccionEn files are found.");
                     bw.newLine();
                 }
 
                 if (stringDirColEnN == null) {
-                    stringDirColEnN = "./coleccionEnNormalized/ // Directory where in-middle results from normalizing module are saved.";
-                    bw.append("stringDirColEnN = " + stringDirColEnN);
+                    stringDirColEnN = "./coleccionEnNormalized/";
+                    bw.append("stringDirColEnN = " + stringDirColEnN + " // Directory where in-middle results from normalizing module are saved.");
                     bw.newLine();
                 }
 
                 if (stringDirColEnStop == null) {
-                    stringDirColEnStop = "./coleccionEnStopped/ // Directory where in-middle results from stopping module are saved.";
-                    bw.append("stringDirColEnStop = " + stringDirColEnStop);
+                    stringDirColEnStop = "./coleccionEnStopped/";
+                    bw.append("stringDirColEnStop = " + stringDirColEnStop + " // Directory where in-middle results from stopping module are saved.");
                     bw.newLine();
                 }
 
                 if (stringDirColEnStem == null) {
-                    stringDirColEnStem = "./coleccionEnStemmed/ // Directory where in-middle results from stemming module are saved.";
-                    bw.append("stringDirColEnStem = " + stringDirColEnStem);
+                    stringDirColEnStem = "./coleccionEnStemmed/";
+                    bw.append("stringDirColEnStem = " + stringDirColEnStem + " // Directory where in-middle results from stemming module are saved.");
                     bw.newLine();
                 }
 
                 if (stringDirIndex == null) {
-                    stringDirIndex = "./index/ // Directory where index files are saved.";
-                    bw.append("stringDirIndex = " + stringDirIndex);
+                    stringDirIndex = "./index/";
+                    bw.append("stringDirIndex = " + stringDirIndex + " // Directory where index files are saved.");
                     bw.newLine();
                 }
 
                 if (stopWordFilename == null) {
-                    stopWordFilename = "englishST.txt // Name of the file containing the empty english words. Must be located in the resources directory.";
-                    bw.append("stopWordFilename = " + stopWordFilename);
+                    stopWordFilename = "englishST.txt";
+                    bw.append("stopWordFilename = " + stopWordFilename + " // Name of the file containing the empty english words. Must be located in the resources directory.");
                     bw.newLine();
                 }
 
                 if (stringFileDictionary == null) {
-                    stringFileDictionary = "fileDictionary.ser // Name of fileDictionary file. It will be located in the resources directory.";
-                    bw.append("stringFileDictionary = " + stringFileDictionary);
+                    stringFileDictionary = "fileDictionary.ser";
+                    bw.append("stringFileDictionary = " + stringFileDictionary + " // Name of fileDictionary file. It will be located in the resources directory.");
                     bw.newLine();
                 }
 
                 if (stringWordDictionary == null) {
-                    stringWordDictionary = "wordDictionary.ser // Name of wordDictionary file. It will be located in the resources directory.";
-                    bw.append("stringWordDictionary = " + stringWordDictionary);
+                    stringWordDictionary = "wordDictionary.ser";
+                    bw.append("stringWordDictionary = " + stringWordDictionary + " // Name of wordDictionary file. It will be located in the resources directory.");
                     bw.newLine();
                 }
 
                 if (stringFrequencyIndex == null) {
-                    stringFrequencyIndex = "frequencyIndex.ser // Name of frequencyIndex file. It will be located in the resources directory.";
-                    bw.append("stringFrequencyIndex = " + stringFrequencyIndex);
+                    stringFrequencyIndex = "frequencyIndex.ser";
+                    bw.append("stringFrequencyIndex = " + stringFrequencyIndex + " // Name of frequencyIndex file. It will be located in the resources directory.");
                     bw.newLine();
                 }
 
                 if (stringWeightIndex == null) {
-                    stringWeightIndex = "weightIndex.ser // Name of weightIndex file. It will be located in the resources directory.";
-                    bw.append("stringWeightIndex = " + stringWeightIndex);
+                    stringWeightIndex = "weightIndex.ser";
+                    bw.append("stringWeightIndex = " + stringWeightIndex + " // Name of weightIndex file. It will be located in the resources directory.");
                     bw.newLine();
                 }
 
                 if (stringSearchFile == null) {
-                    stringSearchFile = "consultas.txt // Name of the search query file. Must be located in the same directory as the executable.";
-                    bw.append("stringSearchFile = " + stringSearchFile);
+                    stringSearchFile = "consultas.txt";
+                    bw.append("stringSearchFile = " + stringSearchFile + " // Name of the search query file. Must be located in the same directory as the executable.");
                     bw.newLine();
                 }
                 return false;
